@@ -3,7 +3,7 @@ import React from 'react'
 const NGODashboard = () => {
   return (
     <div>
-        hello
+        ngo dashboard
 
     </div>
   )

@@ -10,9 +10,9 @@ const api = axios.create({
 });
 
 // Request interceptor - Add token to requests
-api.interceptors.request. use(
+api.interceptors.request.use(
   (config) => {
-    const token = localStorage. getItem('token');
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,12 +24,12 @@ api.interceptors.request. use(
 );
 
 // Response interceptor - Handle errors globally
-api.interceptors.response. use(
+api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const isAuthEndpoint = error.config?. url?.includes('/auth/');
+    const isAuthEndpoint = error.config?.url?.includes('/auth/');
     
-    if (error.response?.status === 401 && !isAuthEndpoint) {
+    if(error.response?.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

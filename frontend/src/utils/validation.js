@@ -58,13 +58,7 @@ export const validateEmail = (email) => {
   return { isValid: true, error:  null };
 };
 
-/**
- * Password Validation Rules:
- * - Minimum 6 characters
- * - At least 1 uppercase letter
- * - At least 1 lowercase letter
- * - At least 1 special character
- */
+
 export const validatePassword = (password) => {
   if (!password) {
     return { isValid:  false, error: 'Password is required' };

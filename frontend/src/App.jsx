@@ -7,8 +7,9 @@ import NGODashboard from './pages/NGODashboard';
 import VerifyEmail from './components/auth/VerifyEmail';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import AdminDashboard from './pages/AdminDashboard';
 
-function App() {
+function App(){
   return (
     <div>
       <Routes>
@@ -19,6 +20,7 @@ function App() {
         <Route path='/ngo-dashboard' element={<NGODashboard/>} />
         <Route path='/verify-email' element={<VerifyEmail />} />
         <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/admin-dashboard' element={<AdminDashboard />} />
         
         {/* Protected Routes */}
         <Route 

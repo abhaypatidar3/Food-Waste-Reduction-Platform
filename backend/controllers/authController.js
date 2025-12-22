@@ -462,11 +462,11 @@ exports.getMe = async (req, res) => {
     let user;
     
     if (req.user.role === 'restaurant') {
-      user = await Restaurant.findById(req.user. id);
+      user = await Restaurant.findById(req.user.id);
     } else if (req. user.role === 'ngo') {
       user = await NGO.findById(req.user.id);
     } else if (req.user.role === 'admin') {
-      user = await Admin.findById(req. user.id);
+      user = await Admin.findById(req.user.id);
     }
 
     res.status(200).json({

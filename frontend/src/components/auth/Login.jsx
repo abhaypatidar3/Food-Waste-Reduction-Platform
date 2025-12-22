@@ -30,7 +30,7 @@ const Login = () => {
     }));
     
     // Clear errors when user starts typing
-    if (errors[name] || errors. submit) {
+    if (errors[name] || errors.submit) {
       setErrors({});
     }
   };
@@ -39,11 +39,11 @@ const Login = () => {
     const newErrors = {};
     
     // Validate email
-    const emailValidation = validateEmail(formData. email);
+    const emailValidation = validateEmail(formData.email);
     if (!emailValidation.isValid) {
       newErrors.email = emailValidation.error;
     }
-    
+
     // Validate password
     const passwordValidation = validatePassword(formData.password);
     if (!passwordValidation.isValid) {
@@ -113,12 +113,12 @@ const Login = () => {
               <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium">Login Failed</p>
-                <p className="text-sm">{errors. submit}</p>
+                <p className="text-sm">{errors.submit}</p>
               </div>
             </div>
           )}
 
-          <div className="space-y-5">
+          <div className="space-y-5"> 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address

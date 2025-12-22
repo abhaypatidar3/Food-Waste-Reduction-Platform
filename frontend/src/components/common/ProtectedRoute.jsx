@@ -69,7 +69,6 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     );
   }
 
-  // User is authenticated, verified, and has correct role
   return children;
 };
 

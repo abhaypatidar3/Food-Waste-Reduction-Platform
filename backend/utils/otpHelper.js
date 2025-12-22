@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const OTP = require('../models/OTP');
+const OTP = require('../models/otp');
 
 // Generate 6-digit OTP
 const generateOTP = () => {

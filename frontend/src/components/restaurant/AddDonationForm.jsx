@@ -181,7 +181,7 @@ const AddDonationForm = ({ onSuccess, onCancel }) => {
             </label>
             <input
               type="text"
-              name="pickupAddress. state"
+              name="pickupAddress.state"
               value={formData.pickupAddress.state}
               onChange={handleChange}
               placeholder="State"

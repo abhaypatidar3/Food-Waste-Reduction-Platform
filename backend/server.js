@@ -15,7 +15,7 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://savefoodbyabhay.netlify.app'  // ✅ No trailing slash
+    'https://savefoodbyabhay.netlify.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -35,6 +35,8 @@ app.get('/', (req, res) => {
 
 // Mount routers
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/donations', require('./routes/donationRoutes'));
 
 // Error handler middleware
 app.use((err, req, res, next) => {

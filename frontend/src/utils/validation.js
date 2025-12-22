@@ -1,11 +1,4 @@
-/**
- * Email Validation Rules:   
- * - Must start with a letter (a-z, A-Z)
- * - Can contain letters, numbers, dots, underscores, hyphens
- * - Must have @ symbol
- * - Must have valid domain
- * - Domain extension must be 2+ characters
- */
+
 export const validateEmail = (email) => {
   if (!email || ! email.trim()) {
     return { isValid: false, error: 'Email is required' };

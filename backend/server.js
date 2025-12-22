@@ -4,17 +4,21 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 
-// Load environment variables
+
 dotenv.config();
 
-// Connect to database
+
 connectDB();
 
 const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin:[
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.CLIENT_URL,
+  ],
   credentials: true
 }));
 app.use(express.json());
@@ -23,7 +27,9 @@ app.use(cookieParser());
 
 // Routes
 app.get('/', (req, res) => {
-  res.json({ message: 'Food Waste Reduction API is running 🚀' });
+  res.json({ message: 'Food Waste Reduction API is running',
+            environment: process.env.NODE_ENV
+  });
 });
 
 // Mount routers

@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
   // Load user from localStorage on mount
   useEffect(() => {
     const loadUser = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage. getItem('token');
       const savedUser = localStorage.getItem('user');
 
       if (token && savedUser) {
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
       if (response.success) {
         // Save token and user
         localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage. setItem('user', JSON.stringify(response.user));
         
         setUser(response.user);
         setIsAuthenticated(true);
@@ -73,43 +73,42 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
-const login = async (credentials) => {
-  try {
-    const response = await authAPI.login(credentials);
-    
-    // Check if response is successful
-    if (response.success) {
-      // Save token and user
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response. user));
+  const login = async (credentials) => {
+    try {
+      const response = await authAPI.login(credentials);
       
-      setUser(response.user);
-      setIsAuthenticated(true);
+      // Check if response is successful
+      if (response.success) {
+        // Save token and user
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response. user));
+        
+        setUser(response.user);
+        setIsAuthenticated(true);
 
-      // Redirect based on role
-      redirectToDashboard(response.user.role);
+        // Redirect based on role
+        redirectToDashboard(response. user.role);
 
-      return { success: true };
-    } else {
-      // Return error with requiresVerification flag
+        return { success: true };
+      } else {
+        // Return error with requiresVerification flag
+        return { 
+          success: false, 
+          message: response.message || 'Login failed',
+          requiresVerification: response.requiresVerification || false,
+          email: response.email || null
+        };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
       return { 
-        success: false, 
-        message: response.message || 'Login failed',
-        requiresVerification: response.requiresVerification || false,
-        email: response.email || null
+        success:  false, 
+        message: error.response?.data?.message || 'Invalid email or password',
+        requiresVerification: error.response?.data?.requiresVerification || false,
+        email: error. response?. data?.email || null
       };
     }
-  } catch (error) {
-    console.error('Login error:', error);
-    return { 
-      success: false, 
-      message: error.response?.data?.message || 'Invalid email or password',
-      requiresVerification: error.response?.data?.requiresVerification || false,
-      email: error.response?. data?.email || null
-    };
-  }
-};
+  };
 
   // Logout function
   const logout = async () => {
@@ -131,15 +130,15 @@ const login = async (credentials) => {
   const redirectToDashboard = (role) => {
     switch (role) {
       case 'restaurant':
-        navigate('/restaurant-dashboard');
+        navigate('/restaurant/dashboard'); // ✅ Updated
         break;
-      case 'ngo':  
-        navigate('/ngo-dashboard');
+      case 'ngo': 
+        navigate('/ngo/dashboard'); // ✅ Updated
         break;
       case 'admin':
-        navigate('/admin-dashboard');
+        navigate('/admin/dashboard'); // ✅ Updated
         break;
-      default:
+      default: 
         navigate('/');
     }
   };

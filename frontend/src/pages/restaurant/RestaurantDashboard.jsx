@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getMyDonations, getDonationStats } from '../services/donationService';
-import AddDonationForm from '../components/restaurant/AddDonationForm';
-import DonationCard from '../components/restaurant/DonationCard';
+import { getMyDonations, getDonationStats } from '../../services/donationService';
+import AddDonationForm from '../../components/restaurant/AddDonationForm';
+import DonationCard from '../../components/restaurant/DonationCard';
 
 const RestaurantDashboard = () => {
   const [donations, setDonations] = useState([]);

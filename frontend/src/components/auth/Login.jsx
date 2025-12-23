@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, Leaf, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { validateEmail, validatePassword } from '../../utils/validation';
 
 const Login = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email:   '',
+    email:  '',
     password: '',
     rememberMe: false
   });
@@ -40,53 +41,67 @@ const Login = () => {
     
     // Validate email
     const emailValidation = validateEmail(formData.email);
-    if (!emailValidation.isValid) {
+    if (!emailValidation. isValid) {
       newErrors.email = emailValidation.error;
     }
 
     // Validate password
     const passwordValidation = validatePassword(formData.password);
     if (!passwordValidation.isValid) {
-      newErrors.password = passwordValidation.error;
+      newErrors.password = passwordValidation. error;
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  if (!isFormReady) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isFormReady) return;
 
-  setErrors({});
-  
-  if (!validateForm()) return;
-  
-  setLoading(true);
+    setErrors({});
+    
+    if (!validateForm()) return;
+    
+    setLoading(true);
 
-  try {
-    const result = await login({
-      email: formData.email.trim(),
-      password: formData.password
-    });
+    try {
+      const result = await login({
+        email: formData.email.trim(),
+        password: formData.password
+      });
 
-    if (!result.success) {
-      // Check if user needs verification
-      if (result.requiresVerification && result.email) {
-        navigate('/verify-email', { state: { email:  result.email } });
+      if (result.success) {
+        // ✅ Redirect based on user role
+        const user = result.user || JSON.parse(localStorage.getItem('user') || '{}');
+        const role = user.role;
+
+        if (role === 'ngo') {
+          navigate('/ngo/dashboard');
+        } else if (role === 'restaurant') {
+          navigate('/restaurant/dashboard');
+        } else if (role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/');
+        }
       } else {
-        setErrors({ submit: result.message || 'Invalid email or password' });
+        // Check if user needs verification
+        if (result.requiresVerification && result.email) {
+          navigate('/verify-email', { state: { email: result.email } });
+        } else {
+          setErrors({ submit: result.message || 'Invalid email or password' });
+        }
+        setLoading(false);
       }
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrors({ submit: 'Unable to connect to server. Please try again.' });
       setLoading(false);
     }
-  } catch (error) {
-    console.error('Login error:', error);
-    setErrors({ submit: 'Unable to connect to server. Please try again.' });
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center p-4">
@@ -108,7 +123,7 @@ const Login = () => {
         </div>
 
         <form onSubmit={handleSubmit} autoComplete="on" noValidate>
-          {errors.submit && (
+          {errors. submit && (
             <div className="mb-5 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg flex items-start gap-2 animate-shake">
               <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
               <div>
@@ -118,7 +133,7 @@ const Login = () => {
             </div>
           )}
 
-          <div className="space-y-5"> 
+          <div className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
@@ -129,16 +144,16 @@ const Login = () => {
                   type="email"
                   id="email"
                   name="email"
-                  value={formData.email}
+                  value={formData. email}
                   onChange={handleChange}
                   placeholder="your@email.com"
                   autoComplete="username"
                   className={`w-full pl-11 pr-4 py-3 border ${
-                    errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus: ring-emerald-500'
-                  } rounded-lg focus: ring-2 focus:border-transparent outline-none transition-all`}
+                    errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-emerald-500'
+                  } rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`}
                 />
               </div>
-              {errors. email && (
+              {errors.email && (
                 <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                   <AlertCircle size={14} />
                   {errors.email}
@@ -156,7 +171,7 @@ const Login = () => {
                   type="password"
                   id="password"
                   name="password"
-                  value={formData. password}
+                  value={formData.password}
                   onChange={handleChange}
                   placeholder="Enter your password"
                   autoComplete="current-password"
@@ -165,7 +180,7 @@ const Login = () => {
                   } rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`}
                 />
               </div>
-              {errors.password && (
+              {errors. password && (
                 <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                   <AlertCircle size={14} />
                   {errors.password}
@@ -180,7 +195,7 @@ const Login = () => {
                   name="rememberMe"
                   checked={formData.rememberMe}
                   onChange={handleChange}
-                  className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus: ring-emerald-500"
+                  className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
                 />
                 <span className="text-sm text-gray-700">Remember me</span>
               </label>
@@ -200,7 +215,7 @@ const Login = () => {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Signing in...
+                  Signing in... 
                 </>
               ) : (
                 'Sign In'

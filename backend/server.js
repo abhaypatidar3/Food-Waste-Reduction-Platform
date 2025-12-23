@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
+const ngoRoutes = require('./routes/ngoRoutes');
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/donations', require('./routes/donationRoutes'));
+app.use('/api/ngo', ngoRoutes);
 
 // Error handler middleware
 app.use((err, req, res, next) => {

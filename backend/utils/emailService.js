@@ -1,56 +1,15 @@
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 
-// Create transporter
-const createTransporter = () => {
-  // If EMAIL_SERVICE is set (like 'gmail'), use it
-  if (process.env.EMAIL_SERVICE) {
-    return nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE, // 'gmail'
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
-  }
-  
-  // Otherwise use host/port configuration
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.EMAIL_PORT) || 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    },
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
-};
+// Set API key
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Verify connection
+// Verify SendGrid on startup
 const verifyConnection = () => {
-  try {
-    const transporter = createTransporter();
-    transporter.verify((error, success) => {
-      if (error) {
-        console.error('❌ SMTP Connection Failed:', error. message);
-        console.error('   EMAIL_USER:', process.env.EMAIL_USER);
-        console.error('   EMAIL_SERVICE:', process.env.EMAIL_SERVICE);
-        console.error('   EMAIL_HOST:', process.env.EMAIL_HOST);
-        console.error('   EMAIL_PORT:', process.env. EMAIL_PORT);
-        console.error('   EMAIL_PASS exists:', !!process.env.EMAIL_PASS);
-      } else {
-        console.log('✅ SMTP Server is ready to send emails');
-        console.log(`   Service: ${process.env.EMAIL_SERVICE || 'Custom'}`);
-        console.log(`   User: ${process.env.EMAIL_USER}`);
-      }
-    });
-  } catch (error) {
-    console.error('❌ SMTP Setup Error:', error. message);
+  if (process.env. SENDGRID_API_KEY) {
+    console.log('✅ SendGrid API Key configured');
+    console.log(`   From: ${process.env.EMAIL_FROM || process.env.EMAIL_USER}`);
+  } else {
+    console.error('❌ SENDGRID_API_KEY not configured! ');
   }
 };
 
@@ -59,24 +18,22 @@ verifyConnection();
 // Send OTP Email for Email Verification
 const sendVerificationOTP = async (email, otp, organizationName) => {
   try {
-    const transporter = createTransporter();
-
-    const mailOptions = {
-      from:  process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    const msg = {
       to: email,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER, // Must be verified in SendGrid
       subject: 'Verify Your Email - FoodShare',
       html:  `
         <!DOCTYPE html>
         <html>
         <head>
           <style>
-            body { font-family: Arial, sans-serif; line-height:  1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            . container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            . content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .otp-box { background: white; border:  2px dashed #059669; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
+            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .otp-box { background: white; border: 2px dashed #059669; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
             .otp-code { font-size: 32px; font-weight: bold; color: #059669; letter-spacing: 5px; }
-            .footer { text-align: center; margin-top: 20px; color:  #666; font-size: 12px; }
+            .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
           </style>
         </head>
         <body>
@@ -87,12 +44,12 @@ const sendVerificationOTP = async (email, otp, organizationName) => {
             </div>
             <div class="content">
               <h2>Hello ${organizationName},</h2>
-              <p>Thank you for registering with FoodShare!  To complete your registration, please verify your email address using the OTP below:</p>
+              <p>Thank you for registering with FoodShare!  To complete your registration, please verify your email address using the OTP below: </p>
               
               <div class="otp-box">
                 <p style="margin: 0; font-size: 14px; color: #666;">Your OTP Code</p>
                 <div class="otp-code">${otp}</div>
-                <p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">Valid for ${process.env.OTP_EXPIRE_MINUTES || 10} minutes</p>
+                <p style="margin: 10px 0 0 0; font-size:  12px; color: #999;">Valid for ${process.env.OTP_EXPIRE_MINUTES || 10} minutes</p>
               </div>
 
               <p><strong>Important:</strong></p>
@@ -105,7 +62,7 @@ const sendVerificationOTP = async (email, otp, organizationName) => {
               <p>Together, let's reduce food waste and feed those in need!  🌱</p>
               
               <div class="footer">
-                <p>&copy; 2024 FoodShare.  All rights reserved.</p>
+                <p>&copy; 2024 FoodShare. All rights reserved.</p>
                 <p>This is an automated email. Please do not reply.</p>
               </div>
             </div>
@@ -115,31 +72,29 @@ const sendVerificationOTP = async (email, otp, organizationName) => {
       `
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Verification email sent:', info.messageId);
+    await sgMail.send(msg);
+    console.log('✅ Verification email sent to:', email);
     return { success: true };
   } catch (error) {
-    console.error('❌ Email sending error:', error);
-    return { success: false, error: error. message };
+    console.error('❌ SendGrid error:', error. response?.body || error. message);
+    return { success: false, error: error.message };
   }
 };
 
 // Send OTP Email for Password Reset
 const sendPasswordResetOTP = async (email, otp, organizationName) => {
   try {
-    const transporter = createTransporter();
-
-    const mailOptions = {
+    const msg = {
+      to: email,
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-      to:  email,
       subject: 'Reset Your Password - FoodShare',
       html: `
         <!DOCTYPE html>
         <html>
         <head>
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            body { font-family:  Arial, sans-serif; line-height: 1.6; color: #333; }
+            . container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background: #f9f9f9; padding:  30px; border-radius:  0 0 10px 10px; }
             .otp-box { background: white; border: 2px dashed #dc2626; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
@@ -156,10 +111,10 @@ const sendPasswordResetOTP = async (email, otp, organizationName) => {
             </div>
             <div class="content">
               <h2>Hello ${organizationName},</h2>
-              <p>We received a request to reset your password.  Use the OTP below to proceed: </p>
+              <p>We received a request to reset your password.  Use the OTP below to proceed:</p>
               
               <div class="otp-box">
-                <p style="margin: 0; font-size: 14px; color: #666;">Your Reset OTP</p>
+                <p style="margin:  0; font-size: 14px; color: #666;">Your Reset OTP</p>
                 <div class="otp-code">${otp}</div>
                 <p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">Valid for ${process.env.OTP_EXPIRE_MINUTES || 10} minutes</p>
               </div>
@@ -186,11 +141,11 @@ const sendPasswordResetOTP = async (email, otp, organizationName) => {
       `
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Password reset email sent:', info.messageId);
+    await sgMail.send(msg);
+    console.log('✅ Password reset email sent to:', email);
     return { success: true };
   } catch (error) {
-    console.error('❌ Email sending error:', error);
+    console.error('❌ SendGrid error:', error.response?.body || error.message);
     return { success: false, error: error.message };
   }
 };

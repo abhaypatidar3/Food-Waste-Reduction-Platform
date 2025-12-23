@@ -17,7 +17,7 @@ const createTransporter = () => {
   }
   
   // Otherwise use host/port configuration
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT) || 465,
     secure: true,
@@ -115,7 +115,7 @@ const sendVerificationOTP = async (email, otp, organizationName) => {
       `
     };
 
-    const info = await transporter. sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
     console.log('✅ Verification email sent:', info.messageId);
     return { success: true };
   } catch (error) {
@@ -130,7 +130,7 @@ const sendPasswordResetOTP = async (email, otp, organizationName) => {
     const transporter = createTransporter();
 
     const mailOptions = {
-      from: process.env. EMAIL_FROM || process.env. EMAIL_USER,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to:  email,
       subject: 'Reset Your Password - FoodShare',
       html: `

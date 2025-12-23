@@ -1,20 +1,41 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter
+// Create transporter with Port 465 SSL
 const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT),
-    secure: false, // true for 465, false for other ports
+  return nodemailer. createTransport({
+    host:  process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process. env.EMAIL_PORT) || 465,
+    secure: true, 
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      user: process.env. EMAIL_USER,
+      pass:  process.env.EMAIL_PASS
     },
     tls: {
-      rejectUnauthorized: false // Only for development
-    }
+      rejectUnauthorized:  false
+    },
+    // Add timeout settings for better error handling
+    connectionTimeout:  10000,  
+    greetingTimeout: 10000,
+    socketTimeout: 10000
   });
 };
+
+// Verify transporter on module load (optional but helpful)
+const verifyConnection = async () => {
+  try {
+    const transporter = createTransporter();
+    await transporter.verify();
+    console.log('✅ SMTP Server is ready to send emails');
+    console.log(`   Host: ${process.env.EMAIL_HOST}`);
+    console.log(`   Port: ${process.env.EMAIL_PORT}`);
+    console.log(`   User: ${process.env.EMAIL_USER}`);
+  } catch (error) {
+    console.error('❌ SMTP Connection Failed:', error.message);
+  }
+};
+
+// Call verification on startup
+verifyConnection();
 
 // Send OTP Email for Email Verification
 const sendVerificationOTP = async (email, otp, organizationName) => {
@@ -30,8 +51,8 @@ const sendVerificationOTP = async (email, otp, organizationName) => {
         <html>
         <head>
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            . container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            body { font-family: Arial, sans-serif; line-height:  1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
             .otp-box { background: white; border: 2px dashed #059669; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
@@ -52,7 +73,7 @@ const sendVerificationOTP = async (email, otp, organizationName) => {
               <div class="otp-box">
                 <p style="margin: 0; font-size: 14px; color: #666;">Your OTP Code</p>
                 <div class="otp-code">${otp}</div>
-                <p style="margin: 10px 0 0 0; font-size:  12px; color: #999;">Valid for ${process.env.OTP_EXPIRE_MINUTES || 10} minutes</p>
+                <p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">Valid for ${process.env.OTP_EXPIRE_MINUTES || 10} minutes</p>
               </div>
 
               <p><strong>Important:</strong></p>
@@ -65,8 +86,8 @@ const sendVerificationOTP = async (email, otp, organizationName) => {
               <p>Together, let's reduce food waste and feed those in need!  🌱</p>
               
               <div class="footer">
-                <p>&copy; 2024 FoodShare. All rights reserved.</p>
-                <p>This is an automated email.  Please do not reply.</p>
+                <p>&copy; 2024 FoodShare.  All rights reserved.</p>
+                <p>This is an automated email. Please do not reply.</p>
               </div>
             </div>
           </div>
@@ -75,7 +96,7 @@ const sendVerificationOTP = async (email, otp, organizationName) => {
       `
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    const info = await transporter. sendMail(mailOptions);
     console.log('✅ Verification email sent:', info.messageId);
     console.log('📧 Preview URL:', nodemailer.getTestMessageUrl(info));
     return { success: true };
@@ -91,15 +112,15 @@ const sendPasswordResetOTP = async (email, otp, organizationName) => {
     const transporter = createTransporter();
 
     const mailOptions = {
-      from:  process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM,
       to: email,
       subject: 'Reset Your Password - FoodShare',
-      html:  `
+      html: `
         <!DOCTYPE html>
         <html>
         <head>
           <style>
-            body { font-family: Arial, sans-serif; line-height:  1.6; color: #333; }
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background: #f9f9f9; padding:  30px; border-radius:  0 0 10px 10px; }
@@ -117,10 +138,10 @@ const sendPasswordResetOTP = async (email, otp, organizationName) => {
             </div>
             <div class="content">
               <h2>Hello ${organizationName},</h2>
-              <p>We received a request to reset your password.  Use the OTP below to proceed:</p>
+              <p>We received a request to reset your password.  Use the OTP below to proceed: </p>
               
               <div class="otp-box">
-                <p style="margin:  0; font-size: 14px; color: #666;">Your Reset OTP</p>
+                <p style="margin: 0; font-size: 14px; color: #666;">Your Reset OTP</p>
                 <div class="otp-code">${otp}</div>
                 <p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">Valid for ${process.env.OTP_EXPIRE_MINUTES || 10} minutes</p>
               </div>
@@ -137,7 +158,7 @@ const sendPasswordResetOTP = async (email, otp, organizationName) => {
               <p>If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
               
               <div class="footer">
-                <p>&copy; 2024 FoodShare. All rights reserved.</p>
+                <p>&copy; 2024 FoodShare. All rights reserved. </p>
                 <p>This is an automated email. Please do not reply.</p>
               </div>
             </div>
@@ -153,7 +174,7 @@ const sendPasswordResetOTP = async (email, otp, organizationName) => {
     return { success: true };
   } catch (error) {
     console.error('❌ Email sending error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error. message };
   }
 };
 

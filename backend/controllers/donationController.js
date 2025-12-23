@@ -1,5 +1,6 @@
 const Donation = require('../models/Donation');
 const User = require('../models/User');
+const { notifyNearbyNGOs, notifyRestaurantAcceptance, notifyDonationCompleted } = require('../utils/notificationHelper');
 
 // @desc    Create new donation
 // @route   POST /api/donations
@@ -7,18 +8,24 @@ const User = require('../models/User');
 exports.createDonation = async (req, res, next) => {
   try {
     const donation = await Donation.create({
-      ...req.body,
+      ... req.body,
       restaurant: req.user._id
     });
 
+    const populatedDonation = await Donation.findById(donation._id)
+      .populate('restaurant', 'organizationName phone email');
+
+    // 🔔 Notify nearby NGOs about new donation
+    await notifyNearbyNGOs(populatedDonation);
+
     res.status(201).json({
       success: true,
-      data: donation
+      data: populatedDonation
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message
+      message:  error.message
     });
   }
 };
@@ -32,13 +39,18 @@ exports.getAllDonations = async (req, res, next) => {
     
     let query = {};
     
+    // If user is NGO, show their accepted donations
+    if (req.user.role === 'ngo') {
+      query.acceptedBy = req.user._id;
+    }
+    
     if (status) query.status = status;
     if (category) query.category = category;
     if (isActive !== undefined) query.isActive = isActive;
 
     const donations = await Donation. find(query)
-      .populate('restaurant', 'name email phone address')
-      .populate('acceptedBy', 'name email phone')
+      .populate('restaurant', 'organizationName email phone address')
+      .populate('acceptedBy', 'organizationName email phone')
       .sort('-createdAt');
 
     res.status(200).json({
@@ -49,7 +61,7 @@ exports.getAllDonations = async (req, res, next) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message
+      message:  error.message
     });
   }
 };
@@ -57,11 +69,11 @@ exports.getAllDonations = async (req, res, next) => {
 // @desc    Get single donation
 // @route   GET /api/donations/:id
 // @access  Private
-exports.getDonation = async (req, res, next) => {
+exports. getDonation = async (req, res, next) => {
   try {
-    const donation = await Donation.findById(req.params. id)
-      .populate('restaurant', 'name email phone address')
-      .populate('acceptedBy', 'name email phone');
+    const donation = await Donation.findById(req. params.id)
+      .populate('restaurant', 'organizationName email phone address')
+      .populate('acceptedBy', 'organizationName email phone');
 
     if (!donation) {
       return res.status(404).json({
@@ -88,7 +100,7 @@ exports.getDonation = async (req, res, next) => {
 exports.getMyDonations = async (req, res, next) => {
   try {
     const donations = await Donation.find({ restaurant: req.user._id })
-      .populate('acceptedBy', 'name email phone')
+      .populate('acceptedBy', 'organizationName email phone')
       .sort('-createdAt');
 
     res.status(200).json({
@@ -109,7 +121,7 @@ exports.getMyDonations = async (req, res, next) => {
 // @access  Private (Restaurant - own donations only)
 exports.updateDonation = async (req, res, next) => {
   try {
-    let donation = await Donation.findById(req.params.id);
+    let donation = await Donation.findById(req.params. id);
 
     if (!donation) {
       return res.status(404).json({
@@ -127,7 +139,7 @@ exports.updateDonation = async (req, res, next) => {
     }
 
     // Don't allow updates if already accepted
-    if (donation.status !== 'Pending') {
+    if (donation. status !== 'Pending') {
       return res.status(400).json({
         success: false,
         message: 'Cannot update donation that has been accepted'
@@ -146,7 +158,7 @@ exports.updateDonation = async (req, res, next) => {
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error. message
+      message: error.message
     });
   }
 };
@@ -173,7 +185,7 @@ exports.deleteDonation = async (req, res, next) => {
       });
     }
 
-    await donation.deleteOne();
+    await donation. deleteOne();
 
     res.status(200).json({
       success: true,
@@ -192,7 +204,8 @@ exports.deleteDonation = async (req, res, next) => {
 // @access  Private (NGO)
 exports.acceptDonation = async (req, res, next) => {
   try {
-    const donation = await Donation.findById(req.params.id);
+    const donation = await Donation.findById(req.params.id)
+      .populate('restaurant', 'organizationName');
 
     if (!donation) {
       return res.status(404).json({
@@ -209,13 +222,17 @@ exports.acceptDonation = async (req, res, next) => {
     }
 
     donation.status = 'Accepted';
-    donation.acceptedBy = req. user._id;
-    donation. acceptedAt = new Date();
+    donation.acceptedBy = req.user._id;
+    donation.acceptedAt = new Date();
 
-    await donation.save();
+    await donation. save();
 
-    await donation.populate('restaurant', 'name email phone address');
-    await donation.populate('acceptedBy', 'name email phone');
+    await donation.populate('acceptedBy', 'organizationName email phone');
+
+    // 🔔 Notify restaurant about acceptance
+    const NGO = require('../models/NGO');
+    const ngo = await NGO.findById(req.user._id);
+    await notifyRestaurantAcceptance(donation.restaurant._id, donation, ngo);
 
     res.status(200).json({
       success: true,
@@ -230,11 +247,12 @@ exports.acceptDonation = async (req, res, next) => {
 };
 
 // @desc    Mark donation as picked up
-// @route   PATCH /api/donations/:id/picked-up
+// @route   PATCH /api/donations/: id/picked-up
 // @access  Private (NGO)
 exports.markAsPickedUp = async (req, res, next) => {
   try {
-    const donation = await Donation.findById(req.params.id);
+    const donation = await Donation.findById(req.params.id)
+      .populate('restaurant', 'organizationName');
 
     if (!donation) {
       return res.status(404).json({
@@ -243,34 +261,51 @@ exports.markAsPickedUp = async (req, res, next) => {
       });
     }
 
-    if (donation.acceptedBy. toString() !== req.user._id.toString()) {
+    if (donation.acceptedBy.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this donation'
       });
     }
 
-    if (donation.status !== 'Accepted') {
-      return res. status(400).json({
+    if (donation. status !== 'Accepted') {
+      return res.status(400).json({
         success: false,
-        message:  'Donation must be accepted first'
+        message: 'Donation must be accepted first'
       });
     }
 
-    donation.status = 'Picked Up';
+    donation. status = 'Picked Up';
     donation.pickedUpAt = new Date();
     donation.isActive = false;
 
     await donation.save();
 
+    // Calculate people fed
+    const match = donation.quantity.match(/\d+/);
+    let peopleFed = 30; // default
+    if (match) {
+      const num = parseInt(match[0]);
+      if (donation.quantity.includes('meal')) {
+        peopleFed = num;
+      } else if (donation.quantity.includes('kg')) {
+        peopleFed = num * 3;
+      } else {
+        peopleFed = num;
+      }
+    }
+
+    // 🔔 Notify NGO about completion
+    await notifyDonationCompleted(req.user._id, donation, peopleFed);
+
     res.status(200).json({
       success: true,
-      data: donation
+      data:  donation
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message: error.message
+      message:  error.message
     });
   }
 };
@@ -284,7 +319,7 @@ exports.getNearbyDonations = async (req, res, next) => {
 
     let query = { status, isActive: true };
 
-    if (category) {
+    if (category && category !== 'all') {
       query.category = category;
     }
 
@@ -292,7 +327,7 @@ exports.getNearbyDonations = async (req, res, next) => {
 
     if (lat && lng) {
       // Find donations near the provided coordinates
-      donations = await Donation.find({
+      donations = await Donation. find({
         ... query,
         'pickupAddress.coordinates': {
           $near: {
@@ -300,28 +335,28 @@ exports.getNearbyDonations = async (req, res, next) => {
               type: 'Point',
               coordinates: [parseFloat(lng), parseFloat(lat)]
             },
-            $maxDistance: parseInt(maxDistance)
+            $maxDistance:  parseInt(maxDistance)
           }
         }
       })
-        .populate('restaurant', 'name email phone address')
+        .populate('restaurant', 'organizationName email phone address')
         .sort('-createdAt');
     } else {
       // If no coordinates, return all matching donations
       donations = await Donation.find(query)
-        .populate('restaurant', 'name email phone address')
+        .populate('restaurant', 'organizationName email phone address')
         .sort('-createdAt');
     }
 
     res.status(200).json({
       success: true,
-      count:  donations.length,
+      count: donations.length,
       data: donations
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      message:  error.message
+      message: error.message
     });
   }
 };
@@ -342,7 +377,7 @@ exports.getDonationStats = async (req, res, next) => {
     });
 
     // Get total quantity donated
-    const donations = await Donation.find({ 
+    const donations = await Donation. find({ 
       restaurant: req.user._id, 
       status: 'Picked Up' 
     });
@@ -353,7 +388,7 @@ exports.getDonationStats = async (req, res, next) => {
       const match = donation.quantity.match(/(\d+\. ?\d*)/);
       if (match) {
         const numericValue = parseFloat(match[1]);
-        // Simple estimation: assume each donation serves ~4 meals on average
+        // Simple estimation:  assume each donation serves ~4 meals on average
         estimatedMeals += numericValue * 4;
       }
     });

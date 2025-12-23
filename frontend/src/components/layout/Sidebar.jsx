@@ -1,10 +1,32 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getNotifications } from '../../services/notificationService';
 
-const Sidebar = ({ role = 'ngo', notificationCount = 0 }) => {
+const Sidebar = ({ role = 'ngo' }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    fetchNotificationCount();
+    
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchNotificationCount, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchNotificationCount = async () => {
+    try {
+      const response = await getNotifications();
+      if (response.success) {
+        setNotificationCount(response.unreadCount);
+      }
+    } catch (error) {
+      console.error('Error fetching notification count:', error);
+    }
+  };
 
   const isActive = (path) => location.pathname === path;
 
@@ -28,14 +50,14 @@ const Sidebar = ({ role = 'ngo', notificationCount = 0 }) => {
     { icon: '▦', label: 'Overview', path: '/ngo/dashboard' },
     { icon: '📍', label: 'Nearby Donations', path: '/ngo/donations' },
     { icon:  '↻', label: 'My Acceptances', path: '/ngo/acceptances' },
-    { icon: '🔔', label:  'Notifications', path: '/ngo/notifications', badge: notificationCount },
+    { icon: '🔔', label: 'Notifications', path: '/ngo/notifications', badge: notificationCount },
   ];
 
   // Restaurant Menu Items
   const restaurantMenuItems = [
     { icon:  '▦', label: 'Overview', path: '/restaurant/dashboard' },
     { icon: '📦', label: 'My Donations', path: '/restaurant/donations' },
-    { icon: '📊', label: 'Analytics', path: '/restaurant/analytics' },
+    { icon:  '📊', label: 'Analytics', path: '/restaurant/analytics' },
     { icon: '🔔', label: 'Notifications', path: '/restaurant/notifications', badge: notificationCount },
   ];
 
@@ -62,9 +84,9 @@ const Sidebar = ({ role = 'ngo', notificationCount = 0 }) => {
           {menuItems.map((item) => (
             <li key={item.path}>
               <Link
-                to={item.path}
+                to={item. path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                  isActive(item. path)
+                  isActive(item.path)
                     ? 'bg-green-600 text-white font-semibold'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}

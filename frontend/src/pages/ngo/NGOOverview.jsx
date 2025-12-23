@@ -83,7 +83,7 @@ const NGOOverview = () => {
   }
 
   return (
-    <DashboardLayout role="ngo" notificationCount={3}>
+    <DashboardLayout role="ngo" >
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">

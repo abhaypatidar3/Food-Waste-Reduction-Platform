@@ -80,7 +80,7 @@ const MyAcceptances = () => {
   const completedCount = donations.filter(d => d.status === 'Picked Up').length;
 
   return (
-    <DashboardLayout role="ngo" notificationCount={3}>
+    <DashboardLayout role="ngo" >
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -176,12 +176,12 @@ const MyAcceptances = () => {
 
                       <div className="flex items-center gap-2 text-gray-700">
                         <span className="text-blue-500">📍</span>
-                        <span className="text-sm">{donation.distance || '1.2'} km away</span>
+                        <span className="text-sm">{donation.distance} km away</span>
                       </div>
 
                       <div className="flex items-center gap-2 text-gray-700">
                         <span className="text-green-500">⏰</span>
-                        <span className="text-sm">Today, {formatTime(donation.expiryTime)}</span>
+                        <span className="text-sm"><b>Expiry:</b> {formatTime(donation.expiryTime)}</span>
                       </div>
                     </div>
 

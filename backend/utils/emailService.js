@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 const createTransporter = () => {
   // If EMAIL_SERVICE is set (like 'gmail'), use it
   if (process.env.EMAIL_SERVICE) {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       service: process.env.EMAIL_SERVICE, // 'gmail'
       auth: {
         user: process.env.EMAIL_USER,

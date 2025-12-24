@@ -232,7 +232,7 @@ const NearbyDonations = () => {
                         disabled={acceptingId === donation._id}
                         className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                       >
-                        {acceptingId === donation._id ? 'Accepting...' : 'View Details'}
+                        {acceptingId === donation._id ? 'Accepting...' : 'Accept Food'}
                       </button>
                     </div>
 

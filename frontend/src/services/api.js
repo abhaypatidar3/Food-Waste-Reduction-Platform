@@ -3,8 +3,8 @@ import axios from 'axios';
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  headers: {
-    'Content-Type': 'application/json'
+  headers:  {
+    'Content-Type':  'application/json'
   },
   withCredentials: true
 });
@@ -13,8 +13,9 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Only add token if it exists and is not 'none'
+    if (token && token !== 'none' && token. length > 10) {
+      config.headers. Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -27,15 +28,26 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const isAuthEndpoint = error.config?.url?.includes('/auth/');
+    const isAuthEndpoint = error.config?.url?. includes('/auth/');
     
-    if(error.response?.status === 401 && !isAuthEndpoint) {
+    // Handle 401 Unauthorized errors (except for auth endpoints)
+    if (error.response?.status === 401 && !isAuthEndpoint) {
+      console.warn('Unauthorized access - clearing session');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      
+      // Only redirect if not already on login page
+      if (! window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
+      }
     }
     
-    return Promise.reject(error);
+    // Handle 403 Forbidden errors
+    if (error.response?.status === 403) {
+      console.warn('Access forbidden');
+    }
+    
+    return Promise. reject(error);
   }
 );
 
@@ -48,10 +60,10 @@ export const authAPI = {
       return response.data;
     } catch (error) {
       throw {
-        response: {
+        response:  {
           data: {
             success: false,
-            message: error.response?.data?.message || 'Registration failed'
+            message:  error.response?.data?.message || 'Registration failed'
           }
         }
       };
@@ -96,15 +108,15 @@ export const authAPI = {
   login: async (credentials) => {
     try {
       const response = await api.post('/auth/login', credentials);
-      return response.data;
+      return response. data;
     } catch (error) {
       throw {
         response: {
           data: {
             success: false,
-            message: error.response?.data?.message || 'Login failed',
-            requiresVerification: error.response?. data?.requiresVerification || false,
-            email: error.response?. data?.email || null
+            message: error.response?.data?. message || 'Login failed',
+            requiresVerification: error. response?. data?.requiresVerification || false,
+            email: error.response?.data?.email || null
           }
         }
       };
@@ -113,14 +125,29 @@ export const authAPI = {
 
   // Logout user
   logout: async () => {
-    const response = await api.post('/auth/logout');
-    return response. data;
+    try {
+      const response = await api.post('/auth/logout');
+      return response.data;
+    } catch (error) {
+      // Even if logout fails on server, clear local storage
+      console.error('Logout error:', error);
+      return { success: true };
+    }
   },
 
   // Get current user
-  getMe:  async () => {
-    const response = await api.get('/auth/me');
-    return response. data;
+  getMe: async () => {
+    try {
+      const response = await api.get('/auth/me');
+      return response.data;
+    } catch (error) {
+      // If getMe fails, clear invalid session
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage. removeItem('user');
+      }
+      throw error;
+    }
   },
 
   // Forgot password - send OTP
@@ -148,13 +175,106 @@ export const authAPI = {
     } catch (error) {
       throw {
         response: {
-          data: {
+          data:  {
             success:  false,
             message: error. response?.data?.message || 'Password reset failed'
           }
         }
       };
     }
+  }
+};
+
+// Donation API endpoints
+export const donationAPI = {
+  // Get all donations
+  getAll: async (params = {}) => {
+    const response = await api.get('/donations', { params });
+    return response.data;
+  },
+
+  // Get single donation
+  getById: async (id) => {
+    const response = await api.get(`/donations/${id}`);
+    return response.data;
+  },
+
+  // Create donation (Restaurant)
+  create: async (donationData) => {
+    const response = await api.post('/donations', donationData);
+    return response.data;
+  },
+
+  // Update donation (Restaurant)
+  update: async (id, donationData) => {
+    const response = await api. patch(`/donations/${id}`, donationData);
+    return response. data;
+  },
+
+  // Delete donation (Restaurant)
+  delete: async (id) => {
+    const response = await api.delete(`/donations/${id}`);
+    return response.data;
+  },
+
+  // Accept donation (NGO)
+  accept: async (id) => {
+    const response = await api.patch(`/donations/${id}/accept`);
+    return response.data;
+  },
+
+  // Mark as picked up (NGO)
+  markAsPickedUp: async (id) => {
+    const response = await api.patch(`/donations/${id}/picked-up`);
+    return response.data;
+  },
+
+  // Get nearby donations (NGO)
+  getNearby: async (params = {}) => {
+    const response = await api.get('/donations/nearby', { params });
+    return response.data;
+  },
+
+  // Get my donations (Restaurant)
+  getMyDonations: async () => {
+    const response = await api.get('/donations/my-donations');
+    return response.data;
+  },
+
+  // Get donation stats (Restaurant)
+  getStats: async () => {
+    const response = await api.get('/donations/stats');
+    return response.data;
+  }
+};
+
+// NGO API endpoints
+export const ngoAPI = {
+  // Get NGO analytics
+  getAnalytics: async () => {
+    const response = await api.get('/ngo/analytics');
+    return response.data;
+  }
+};
+
+// Notification API endpoints
+export const notificationAPI = {
+  // Get all notifications
+  getAll: async () => {
+    const response = await api.get('/notifications');
+    return response.data;
+  },
+
+  // Mark notification as read
+  markAsRead:  async (id) => {
+    const response = await api.put(`/notifications/${id}/read`);
+    return response.data;
+  },
+
+  // Mark all notifications as read
+  markAllAsRead: async () => {
+    const response = await api.put('/notifications/read-all');
+    return response. data;
   }
 };
 

@@ -37,6 +37,8 @@ function App(){
 
         <Route path="/" element={<Navigate to="/login" replace />} />
 
+        <Route path="*" element={<Navigate to="/login" replace />} />
+
         
         {/* Protected Routes */}
         <Route 
@@ -56,6 +58,8 @@ function App(){
           } 
         />
       </Routes>
+
+      <Routes path="/verify-email" element={<VerifyEmail />} />
 
     </div>
   );

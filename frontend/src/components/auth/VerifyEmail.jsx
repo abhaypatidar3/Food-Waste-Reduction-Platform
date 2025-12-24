@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Leaf, AlertCircle, CheckCircle, Mail } from 'lucide-react';
-import { authAPI } from '../../services/api';
+import { Leaf, AlertCircle, CheckCircle, Mail, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const email = location.state?.email;
+  const { verifyEmail, resendOTP } = useAuth();
+  const email = location.state?. email;
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -58,19 +59,19 @@ const VerifyEmail = () => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').slice(0, 6);
     
-    if (!/^\d+$/.test(pastedData)) return;
+    if (!/^\d+$/. test(pastedData)) return;
 
     const newOtp = pastedData.split('');
     while (newOtp.length < 6) newOtp.push('');
     
     setOtp(newOtp);
-    inputRefs.current[Math.min(pastedData.length, 5)]?.focus();
+    inputRefs.current[Math. min(pastedData.length, 5)]?.focus();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const otpString = otp.join('');
+    const otpString = otp. join('');
     
     if (otpString.length !== 6) {
       setError('Please enter the complete 6-digit OTP');
@@ -81,31 +82,19 @@ const VerifyEmail = () => {
     setError('');
 
     try {
-      const response = await authAPI.verifyEmail(email, otpString);
+      // Use AuthContext verifyEmail function
+      const result = await verifyEmail(email, otpString);
 
-      if (response.success) {
-        // Save token and user
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        
+      if (result.success) {
         setSuccess('Email verified successfully! Redirecting.. .');
-        
-        setTimeout(() => {
-          // Redirect based on role
-          if (response. user.role === 'restaurant') {
-            navigate('/restaurant-dashboard');
-          } else if (response.user.role === 'ngo') {
-            navigate('/ngo-dashboard');
-          } else {
-            navigate('/');
-          }
-        }, 1500);
+        // AuthContext will handle the redirect automatically
       } else {
-        setError(response.message || 'Verification failed');
+        setError(result.message || 'Verification failed');
+        setLoading(false);
       }
     } catch (error) {
-      setError(error.response?.data?.message || 'Invalid or expired OTP');
-    } finally {
+      console.error('Verification error:', error);
+      setError('Invalid or expired OTP.  Please try again.');
       setLoading(false);
     }
   };
@@ -118,16 +107,20 @@ const VerifyEmail = () => {
     setSuccess('');
 
     try {
-      const response = await authAPI.resendOTP(email, 'email_verification');
+      // Use AuthContext resendOTP function
+      const result = await resendOTP(email, 'email_verification');
       
-      if (response.success) {
-        setSuccess('OTP sent successfully! Please check your email.');
+      if (result.success) {
+        setSuccess(result.message || 'OTP sent successfully! Please check your email.');
         setResendCooldown(60); // 60 seconds cooldown
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?. focus();
+      } else {
+        setError(result.message || 'Failed to resend OTP');
       }
     } catch (error) {
-      setError(error.response?.data?.message || 'Failed to resend OTP');
+      console.error('Resend OTP error:', error);
+      setError('Failed to resend OTP. Please try again.');
     } finally {
       setResendLoading(false);
     }
@@ -137,6 +130,15 @@ const VerifyEmail = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center p-4">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate('/signup')}
+        className="absolute top-6 left-6 flex items-center gap-2 text-white hover:text-emerald-100 transition-colors"
+      >
+        <ArrowLeft size={20} />
+        <span className="font-medium">Back to Sign Up</span>
+      </button>
+
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -151,13 +153,13 @@ const VerifyEmail = () => {
           <p className="text-gray-600 text-sm">
             We've sent a 6-digit OTP to
           </p>
-          <p className="text-emerald-600 font-semibold">{email}</p>
+          <p className="text-emerald-600 font-semibold mt-1">{email}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Success Message */}
           {success && (
-            <div className="bg-green-50 border border-green-300 text-green-800 px-4 py-3 rounded-lg flex items-start gap-2">
+            <div className="bg-green-50 border border-green-300 text-green-800 px-4 py-3 rounded-lg flex items-start gap-2 animate-fade-in">
               <CheckCircle size={20} className="flex-shrink-0 mt-0.5" />
               <p className="text-sm">{success}</p>
             </div>
@@ -165,7 +167,7 @@ const VerifyEmail = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg flex items-start gap-2">
+            <div className="bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg flex items-start gap-2 animate-shake">
               <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
               <p className="text-sm">{error}</p>
             </div>
@@ -182,14 +184,16 @@ const VerifyEmail = () => {
                   key={index}
                   ref={(el) => (inputRefs.current[index] = el)}
                   type="text"
+                  inputMode="numeric"
                   maxLength="1"
                   value={digit}
-                  onChange={(e) => handleChange(index, e.target. value)}
+                  onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={index === 0 ? handlePaste : undefined}
-                  className={`w-12 h-14 text-center text-2xl font-bold border-2 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all ${
-                    error ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  disabled={loading || success}
+                  className={`w-12 h-14 text-center text-2xl font-bold border-2 rounded-lg focus:ring-2 focus: ring-emerald-500 focus:border-transparent outline-none transition-all ${
+                    error ?  'border-red-500' : 'border-gray-300'
+                  } ${(loading || success) ? 'bg-gray-50 cursor-not-allowed' :  ''}`}
                 />
               ))}
             </div>
@@ -218,16 +222,19 @@ const VerifyEmail = () => {
 
           {/* Resend OTP */}
           <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">Didn't receive the code?</p>
+            <p className="text-sm text-gray-600 mb-2">Didn't receive the code? </p>
             <button
               type="button"
               onClick={handleResend}
-              disabled={resendLoading || resendCooldown > 0}
-              className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={resendLoading || resendCooldown > 0 || success}
+              className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {resendLoading ?  (
-                'Sending...'
-              ) : resendCooldown > 0 ?  (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
+                  Sending...
+                </span>
+              ) : resendCooldown > 0 ? (
                 `Resend in ${resendCooldown}s`
               ) : (
                 'Resend OTP'
@@ -238,8 +245,20 @@ const VerifyEmail = () => {
 
         {/* Help Text */}
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-xs text-center text-gray-500">
-            The OTP is valid for 10 minutes. Please check your spam folder if you don't see the email.
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-xs text-center text-blue-800">
+              💡 <strong>Tip:</strong> The OTP is valid for 10 minutes. Check your spam folder if you don't see the email.
+            </p>
+          </div>
+        </div>
+
+        {/* Support Link */}
+        <div className="mt-4 text-center">
+          <p className="text-xs text-gray-500">
+            Having trouble? {' '}
+            <a href="mailto:support@foodshare. com" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+              Contact Support
+            </a>
           </p>
         </div>
       </div>

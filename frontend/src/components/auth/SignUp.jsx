@@ -140,7 +140,13 @@ const handleSubmit = async (e) => {
   } finally {
     setLoading(false);
   }
+  if (response.requiresVerification) {
+  navigate('/verify-email', { state: { email:  formData.email } });
+  return;
+}
+
 };
+ 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center p-4 py-12">

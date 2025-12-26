@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminAPI } from '../../services/adminService';
 import { Users, Package, TrendingUp, CheckCircle, Clock, XCircle } from 'lucide-react';
+import {useAdmin} from '../../context/AdminContext';
+
 
 const AdminOverview = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const {filters, setFilters, status, setStatus} = useAdmin();
   useEffect(() => {
     fetchStats();
   }, []);
@@ -104,7 +106,7 @@ const AdminOverview = () => {
             <h3 className="text-3xl font-bold text-gray-800 mb-1">{stats?.users?.unverified || 0}</h3>
             <p className="text-sm text-gray-600 mb-2">Pending Verification</p>
             <button
-              onClick={() => navigate('/admin/users')}
+              onClick={() => {navigate('/admin/users'), setFilters({ ... filters, status:'unverified' })}}
               className="text-xs text-orange-600 hover:text-orange-700 font-semibold"
             >
               Review now →

@@ -2,12 +2,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getNotifications } from '../../services/notificationService';
 import { X, Menu } from 'lucide-react';
+import {useAdmin} from '../../context/AdminContext';
 
 const Sidebar = ({ role, isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const {filters, setFilters} = useAdmin();
 
   useEffect(() => {
     // Only fetch notifications for NGO and Restaurant (not Admin)
@@ -73,7 +75,7 @@ const Sidebar = ({ role, isOpen, onClose }) => {
   // Admin Menu Items
   const adminMenuItems = [
     { icon:  '▦', label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: '👥', label: 'User Management', path: '/admin/users' },
+    { icon: '👥', label: 'User Management', path: '/admin/users', onClick: ()=>setFilters({ ...filters, status:'all' }) },
     { icon: '📦', label: 'Donations', path: '/admin/donations' },
     { icon: '📈', label: 'Reports' },
   ];

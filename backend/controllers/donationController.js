@@ -361,48 +361,141 @@ exports.getNearbyDonations = async (req, res, next) => {
   }
 };
 
-// @desc    Get donation stats (restaurant)
-// @route   GET /api/donations/stats
-// @access  Private (Restaurant)
+
 exports.getDonationStats = async (req, res, next) => {
   try {
-    const totalDonations = await Donation. countDocuments({ restaurant: req. user._id });
-    const activeDonations = await Donation. countDocuments({ 
-      restaurant: req.user._id, 
-      status: 'Pending' 
+    const restaurantId = req.user._id;
+
+    // Current month dates
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    // Total Donations
+    const totalDonations = await Donation.countDocuments({ 
+      restaurant: restaurantId 
     });
+
+    // Active Donations (Pending or Accepted)
+    const activeDonations = await Donation.countDocuments({ 
+      restaurant: restaurantId, 
+      status: { $in: ['Pending', 'Accepted'] },
+      isActive: true
+    });
+
+    // Completed Donations
     const completedDonations = await Donation.countDocuments({ 
-      restaurant: req.user._id, 
+      restaurant:  restaurantId, 
       status: 'Picked Up' 
     });
 
-    // Get total quantity donated
-    const donations = await Donation. find({ 
-      restaurant: req.user._id, 
+    // Get all completed donations to calculate meals and food saved
+    const donations = await Donation.find({ 
+      restaurant: restaurantId, 
       status: 'Picked Up' 
-    });
+    }).select('quantity');
     
-    // Extract numeric values from quantity strings (e.g., "5 kg" -> 5)
-    let estimatedMeals = 0;
+    // Calculate meals saved and food weight
+    let mealsSaved = 0;
+    let foodSavedKg = 0;
+
     donations.forEach(donation => {
-      const match = donation.quantity.match(/(\d+\. ?\d*)/);
+      const match = donation.quantity. match(/(\d+\. ?\d*)/);
       if (match) {
         const numericValue = parseFloat(match[1]);
-        // Simple estimation:  assume each donation serves ~4 meals on average
-        estimatedMeals += numericValue * 4;
+        
+        if (donation.quantity.toLowerCase().includes('meal')) {
+          mealsSaved += numericValue;
+          foodSavedKg += numericValue * 0.3; // Estimate 0.3 kg per meal
+        } else if (donation.quantity.toLowerCase().includes('kg')) {
+          foodSavedKg += numericValue;
+          mealsSaved += numericValue * 3; // Estimate 3 meals per kg
+        } else if (donation.quantity.toLowerCase().includes('item')) {
+          mealsSaved += numericValue;
+          foodSavedKg += numericValue * 0.2; // Estimate 0.2 kg per item
+        } else {
+          // Default:  treat as items
+          mealsSaved += numericValue * 2;
+          foodSavedKg += numericValue * 0.3;
+        }
       }
     });
+
+    // Calculate percentage changes (compared to last month)
+    const lastMonthCompleted = await Donation.countDocuments({
+      restaurant: restaurantId,
+      status: 'Picked Up',
+      pickedUpAt: {
+        $gte: startOfLastMonth,
+        $lte: endOfLastMonth
+      }
+    });
+
+    const thisMonthCompleted = await Donation.countDocuments({
+      restaurant: restaurantId,
+      status: 'Picked Up',
+      pickedUpAt: { $gte: startOfMonth }
+    });
+
+    // Calculate percentage changes
+    const totalDonationsChange = lastMonthCompleted > 0 
+      ? Math.round(((thisMonthCompleted - lastMonthCompleted) / lastMonthCompleted) * 100)
+      : thisMonthCompleted > 0 ?  100 : 0;
+
+    // Get last month meals for comparison
+    const lastMonthDonations = await Donation.find({
+      restaurant: restaurantId,
+      status: 'Picked Up',
+      pickedUpAt: {
+        $gte: startOfLastMonth,
+        $lte: endOfLastMonth
+      }
+    }).select('quantity');
+
+    let lastMonthMeals = 0;
+    let lastMonthFoodKg = 0;
+
+    lastMonthDonations.forEach(donation => {
+      const match = donation.quantity.match(/(\d+\.?\d*)/);
+      if (match) {
+        const numericValue = parseFloat(match[1]);
+        if (donation.quantity.toLowerCase().includes('meal')) {
+          lastMonthMeals += numericValue;
+          lastMonthFoodKg += numericValue * 0.3;
+        } else if (donation. quantity.toLowerCase().includes('kg')) {
+          lastMonthFoodKg += numericValue;
+          lastMonthMeals += numericValue * 3;
+        } else {
+          lastMonthMeals += numericValue * 2;
+          lastMonthFoodKg += numericValue * 0.3;
+        }
+      }
+    });
+
+    const mealsSavedChange = lastMonthMeals > 0
+      ? Math.round(((mealsSaved - lastMonthMeals) / lastMonthMeals) * 100)
+      : mealsSaved > 0 ? 100 : 0;
+
+    const foodSavedChange = lastMonthFoodKg > 0
+      ?  Math.round(((foodSavedKg - lastMonthFoodKg) / lastMonthFoodKg) * 100)
+      : foodSavedKg > 0 ? 100 : 0;
 
     res.status(200).json({
       success: true,
       data: {
         totalDonations,
+        totalDonationsChange,
         activeDonations,
         completedDonations,
-        mealsSaved: Math.round(estimatedMeals)
+        mealsSaved:  Math.round(mealsSaved),
+        mealsSavedChange,
+        foodSavedKg: Math.round(foodSavedKg),
+        foodSavedChange
       }
     });
   } catch (error) {
+    console.error('Get donation stats error:', error);
     res.status(400).json({
       success: false,
       message: error.message

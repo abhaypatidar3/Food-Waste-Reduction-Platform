@@ -2,15 +2,12 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminAPI } from '../../services/adminService';
 import { Search, Check, X, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import {useAdmin } from '../../context/AdminContext';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    role: 'all',
-    status: 'all',
-    search: ''
-  });
+  const {filters, setFilters, status, setStatus} = useAdmin();
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -58,7 +55,7 @@ const AdminUsers = () => {
       alert(error.response?.data?.message || 'Failed to verify user');
     }
   };
-
+  
   const handleToggleStatus = async (userId) => {
     if (!window.confirm('Toggle user status?')) return;
 
@@ -144,7 +141,7 @@ const AdminUsers = () => {
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus: ring-green-500 focus: border-transparent outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus: ring-green-500 focus:border-transparent outline-none"
               >
                 <option value="all">All Status</option>
                 <option value="verified">Verified</option>

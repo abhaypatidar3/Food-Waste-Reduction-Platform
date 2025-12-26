@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom';
+import { Leaf, Users, TrendingUp, MapPin, Clock, Heart } from 'lucide-react';
 const LandingPage = () => {
   return (
     <div className='min-h-screen'>
@@ -29,6 +30,18 @@ const LandingPage = () => {
               </div>
             </div>
         </header>
+        <div className='py-20 text-center bg-slate-300 grid grid-cols-1 gap-10 md:grid-cols-3'>
+          <div className='flex pl-[10vw]'>
+            <Heart className='w-[50px] text-[#1E7F5C]' />
+            <p>Meals Saved</p>
+          </div>
+          <div>
+            NGOs Connected
+          </div>
+          <div>
+            Food Waste Prevented
+          </div>
+        </div>
     </div>
   )
 }

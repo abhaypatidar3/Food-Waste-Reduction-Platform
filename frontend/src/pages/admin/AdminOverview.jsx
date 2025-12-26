@@ -187,13 +187,11 @@ const AdminOverview = () => {
               <Package size={20} />
               <span>View Donations</span>
             </button>
-            <button
-              onClick={() => navigate('/admin/reports')}
-              className="flex items-center justify-center gap-3 px-6 py-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+            <p
+              className="flex items-center justify-center gap-3 px-6 py-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors" disabled
             >
-              <TrendingUp size={20} />
               <span>Reports</span>
-            </button>
+            </p>
           </div>
         </div>
       </div>

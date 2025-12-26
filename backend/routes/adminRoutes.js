@@ -25,7 +25,7 @@ router.put('/users/:id/toggle-status', toggleUserStatus);
 router.delete('/users/:id', deleteUser);
 
 // Donations management
-router. get('/donations', getAllDonations);
+router.get('/donations', getAllDonations);
 router.delete('/donations/:id', deleteDonation);
 
 module.exports = router;

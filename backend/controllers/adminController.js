@@ -277,17 +277,20 @@ exports.toggleUserStatus = async (req, res) => {
       });
     }
 
-    user.isActive = !user.isActive;
-    await user.save();
+  const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive: !user.isActive },
+      { new: true, runValidators: false }
+    ).select('-password');
 
     res.status(200).json({
       success: true,
-      message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+      message: `User ${updatedUser.isActive ? 'activated' : 'deactivated'} successfully`,
       user: {
-        id: user._id,
-        email: user.email,
-        organizationName: user. organizationName,
-        isActive: user.isActive
+        id: updatedUser._id,
+        email: updatedUser.email,
+        organizationName: updatedUser.organizationName,
+        isActive: updatedUser.isActive
       }
     });
   } catch (error) {
@@ -365,12 +368,12 @@ exports.deleteDonation = async (req, res) => {
   }
 };
 
-module.exports = {
-  getAdminStats,
-  getAllUsers,
-  getAllDonations,
-  verifyUser,
-  toggleUserStatus,
-  deleteUser,
-  deleteDonation
-};
+// module.exports = {
+//   getAdminStats,
+//   getAllUsers,
+//   getAllDonations,
+//   verifyUser,
+//   toggleUserStatus,
+//   deleteUser,
+//   deleteDonation
+// };

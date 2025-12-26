@@ -2,8 +2,14 @@ import { useState } from 'react';
 import Sidebar from './Sidebar';
 import { Menu } from 'lucide-react';
 
-const DashboardLayout = ({ children, role = 'ngo' }) => {
+const DashboardLayout = ({ children, role }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Get theme color based on role
+  const getThemeColor = () => {
+    if (role === 'admin') return 'bg-purple-600';
+    return 'bg-green-600';
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -21,8 +27,8 @@ const DashboardLayout = ({ children, role = 'ngo' }) => {
             </button>
             
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold">
-                🍃
+              <div className={`w-8 h-8 ${getThemeColor()} rounded-lg flex items-center justify-center text-white font-bold`}>
+                {role === 'admin' ? '🛡️' : '🍃'}
               </div>
               <h1 className="text-lg font-bold text-gray-800">FoodShare</h1>
             </div>

@@ -3,20 +3,23 @@ import { useState, useEffect } from 'react';
 import { getNotifications } from '../../services/notificationService';
 import { X, Menu } from 'lucide-react';
 
-const Sidebar = ({ role = 'ngo', isOpen, onClose }) => {
+const Sidebar = ({ role, isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
-    fetchNotificationCount();
-    
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchNotificationCount, 30000);
-    
-    return () => clearInterval(interval);
-  }, []);
+    // Only fetch notifications for NGO and Restaurant (not Admin)
+    if (role !== 'admin') {
+      fetchNotificationCount();
+      
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(fetchNotificationCount, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [role]);
 
   const fetchNotificationCount = async () => {
     try {
@@ -67,7 +70,44 @@ const Sidebar = ({ role = 'ngo', isOpen, onClose }) => {
     { icon: '🔔', label:  'Notifications', path: '/restaurant/notifications', badge: notificationCount },
   ];
 
-  const menuItems = role === 'ngo' ? ngoMenuItems :  restaurantMenuItems;
+  // Admin Menu Items
+  const adminMenuItems = [
+    { icon:  '▦', label: 'Dashboard', path: '/admin/dashboard' },
+    { icon: '👥', label: 'User Management', path: '/admin/users' },
+    { icon: '📦', label: 'Donations', path: '/admin/donations' },
+    { icon: '📈', label: 'Reports' },
+  ];
+
+  // Select menu items based on role
+  const menuItems = 
+    role === 'ngo' ?  ngoMenuItems :
+    role === 'restaurant' ? restaurantMenuItems : 
+    role === 'admin' ? adminMenuItems : 
+    [];
+
+  // Get portal name based on role
+  const getPortalName = () => {
+    if (role === 'ngo') return 'NGO Portal';
+    if (role === 'restaurant') return 'Restaurant Portal';
+    if (role === 'admin') return 'Admin Portal';
+    return 'Portal';
+  };
+
+  // Get theme color based on role
+  const getThemeColor = () => {
+    if (role === 'admin') return 'bg-purple-600';
+    return 'bg-green-600';
+  };
+
+  const getActiveColor = () => {
+    if (role === 'admin') return 'bg-purple-600';
+    return 'bg-green-600';
+  };
+
+  const getBadgeColor = () => {
+    if (role === 'admin') return 'text-purple-600';
+    return 'text-green-600';
+  };
 
   return (
     <>
@@ -88,12 +128,12 @@ const Sidebar = ({ role = 'ngo', isOpen, onClose }) => {
         {/* Logo */}
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-              🍃
+            <div className={`w-10 h-10 ${getThemeColor()} rounded-lg flex items-center justify-center text-white font-bold text-xl`}>
+              {role === 'admin' ? '🛡️' : '🍃'}
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-800">FoodShare</h1>
-              <p className="text-xs text-gray-500">{role === 'ngo' ? 'NGO Portal' : 'Restaurant Portal'}</p>
+              <p className="text-xs text-gray-500">{getPortalName()}</p>
             </div>
           </div>
 
@@ -109,21 +149,21 @@ const Sidebar = ({ role = 'ngo', isOpen, onClose }) => {
         {/* Menu Items */}
         <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-2">
-            {menuItems. map((item) => (
+            {menuItems.map((item) => (
               <li key={item.path}>
                 <button
                   onClick={() => handleNavClick(item.path)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     isActive(item.path)
-                      ? 'bg-green-600 text-white font-semibold'
+                      ? `${getActiveColor()} text-white font-semibold`
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <span className="text-lg">{item.icon}</span>
                   <span className="flex-1 text-left">{item.label}</span>
-                  {item. badge > 0 && (
+                  {item.badge > 0 && (
                     <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
-                      isActive(item.path) ? 'bg-white text-green-600' : 'bg-orange-500 text-white'
+                      isActive(item.path) ? `bg-white ${getBadgeColor()}` : 'bg-orange-500 text-white'
                     }`}>
                       {item.badge}
                     </span>
@@ -136,13 +176,18 @@ const Sidebar = ({ role = 'ngo', isOpen, onClose }) => {
 
         {/* Bottom Actions */}
         <div className="p-4 border-t border-gray-200 space-y-2">
-          <button
-            onClick={() => handleNavClick(`/${role}/settings`)}
-            className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
-          >
-            <span className="text-lg">⚙️</span>
-            <span>Settings</span>
-          </button>
+          {/* Settings (only show for non-admin or if not in menu) */}
+          {role !== 'admin' && (
+            <button
+              onClick={() => handleNavClick(`/${role}/settings`)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover: bg-gray-100 rounded-lg transition-all"
+            >
+              <span className="text-lg">⚙️</span>
+              <span>Settings</span>
+            </button>
+          )}
+          
+          {/* Logout */}
           <button
             onClick={handleLogout}
             disabled={loading}

@@ -3,15 +3,16 @@ import LandingPage from './pages/LandingPage';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup'
 import RestaurantDashboard from './pages/restaurant/RestaurantDashboard';
-import NGODashboard from './pages/NGODashboard';
 import VerifyEmail from './components/auth/VerifyEmail';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ProtectedRoute from './components/common/ProtectedRoute';
-import AdminDashboard from './pages/AdminDashboard';
 import NGOOverview from './pages/ngo/NGOOverview';
 import NearbyDonations from './pages/ngo/NearbyDonations';
 import MyAcceptances from './pages/ngo/MyAcceptances';
 import Notifications from './pages/ngo/Notifications';
+import AdminOverview from './pages/admin/AdminOverview';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminDonations from './pages/admin/AdminDonations';
 
 
 function App(){
@@ -22,10 +23,8 @@ function App(){
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
         
-        <Route path='/ngo-dashboard' element={<NGODashboard/>} />
         <Route path='/verify-email' element={<VerifyEmail />} />
         <Route path='/forgot-password' element={<ForgotPassword />} />
-        <Route path='/admin-dashboard' element={<AdminDashboard />} />
 
 
         <Route path='/ngo/dashboard' element={<NGOOverview />} />
@@ -34,6 +33,24 @@ function App(){
         <Route path='/ngo/acceptances' element={<MyAcceptances />} />
 
         <Route path='/restaurant/dashboard' element={<RestaurantDashboard />} />
+
+           <Route path="/admin/dashboard" element={ <ProtectedRoute allowedRoles={['admin']}> <AdminOverview /> </ProtectedRoute>}/>
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/donations"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDonations />
+              </ProtectedRoute>
+            }
+          />
 
         <Route path="/" element={<Navigate to="/login" replace />} />
 
@@ -46,14 +63,6 @@ function App(){
           element={
             <ProtectedRoute allowedRoles={['restaurant']}>
               <RestaurantDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path='/ngo-dashboard' 
-          element={
-            <ProtectedRoute allowedRoles={['ngo']}>
-              <NGODashboard />
             </ProtectedRoute>
           } 
         />

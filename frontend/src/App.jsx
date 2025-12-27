@@ -14,7 +14,9 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminDonations from './pages/admin/AdminDonations';
 import RestaurantOverview from './pages/restaurant/RestaurantOverview';
 import RestaurantHistory from './pages/restaurant/RestaurantHistory';
-
+import RestaurantDonations from './pages/restaurant/RestaurantDonations';
+import AddDonation from './pages/restaurant/AddDonation';
+import RestaurantNotifications from './pages/restaurant/RestaurantNotifications';
 
 function App(){
   return (
@@ -35,6 +37,30 @@ function App(){
 
         <Route path='/restaurant/dashboard' element={<RestaurantOverview/>} />
         <Route
+              path="/restaurant/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['restaurant']}>
+                  <RestaurantOverview />
+                </ProtectedRoute>
+              }
+        />
+        <Route
+          path="/restaurant/add-donation"
+          element={
+            <ProtectedRoute allowedRoles={['restaurant']}>
+              <AddDonation />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/restaurant/donations"
+          element={
+            <ProtectedRoute allowedRoles={['restaurant']}>
+              <RestaurantDonations />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/restaurant/history"
           element={
             <ProtectedRoute allowedRoles={['restaurant']}>
@@ -42,6 +68,14 @@ function App(){
             </ProtectedRoute>
           }
         />
+            <Route
+              path="/restaurant/history"
+              element={
+                <ProtectedRoute allowedRoles={['restaurant']}>
+                  <RestaurantHistory />
+                </ProtectedRoute>
+              }
+            />
 
           <Route path="/admin/dashboard" element={ <ProtectedRoute allowedRoles={['admin']}> <AdminOverview/> </ProtectedRoute>}/>
           <Route
@@ -60,6 +94,15 @@ function App(){
               </ProtectedRoute>
             }
           />
+
+        <Route
+          path="/restaurant/notifications"
+           element={
+             <ProtectedRoute allowedRoles={['restaurant']}>
+               <RestaurantNotifications />
+             </ProtectedRoute>
+            }
+        />
 
         <Route path="/" element={<Navigate to="/login" replace />} />
 

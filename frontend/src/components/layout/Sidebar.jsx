@@ -65,12 +65,13 @@ const Sidebar = ({ role, isOpen, onClose }) => {
   ];
 
   // Restaurant Menu Items
-  const restaurantMenuItems = [
-    { icon: '▦', label:  'Overview', path: '/restaurant/dashboard' },
-    { icon: '📦', label: 'My Donations', path: '/restaurant/donations' },
-    { icon: '📊', label:  'Analytics', path: '/restaurant/analytics' },
-    { icon: '🔔', label:  'Notifications', path: '/restaurant/notifications', badge: notificationCount },
-  ];
+const restaurantMenuItems = [
+  { icon: '▦', label: 'Overview', path: '/restaurant/dashboard' },
+  { icon: '➕', label: 'Add Donation', path: '/restaurant/add-donation' },
+  { icon:  '📦', label: 'Active Donations', path: '/restaurant/donations' },
+  { icon: '🕒', label: 'History', path: '/restaurant/history' },
+  { icon: '🔔', label: 'Notifications', path: '/restaurant/notifications', badge: notificationCount },
+];
 
   // Admin Menu Items
   const adminMenuItems = [

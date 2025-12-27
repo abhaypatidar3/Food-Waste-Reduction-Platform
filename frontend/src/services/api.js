@@ -3,16 +3,16 @@ import axios from 'axios';
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  headers:  {
-    'Content-Type':  'application/json'
+  headers: {
+    'Content-Type': 'application/json'
   },
   withCredentials: true
 });
 
 // Request interceptor - Add token to requests
-api.interceptors.request.use(
+api.interceptors.request. use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage. getItem('token');
     // Only add token if it exists and is not 'none'
     if (token && token !== 'none' && token. length > 10) {
       config.headers. Authorization = `Bearer ${token}`;
@@ -25,10 +25,10 @@ api.interceptors.request.use(
 );
 
 // Response interceptor - Handle errors globally
-api.interceptors.response.use(
+api.interceptors.response. use(
   (response) => response,
   (error) => {
-    const isAuthEndpoint = error.config?.url?. includes('/auth/');
+    const isAuthEndpoint = error.config?.url?.includes('/auth/');
     
     // Handle 401 Unauthorized errors (except for auth endpoints)
     if (error.response?.status === 401 && !isAuthEndpoint) {
@@ -53,69 +53,65 @@ api.interceptors.response.use(
 
 // Auth API endpoints
 export const authAPI = {
-  // Register new user
   register: async (userData) => {
     try {
       const response = await api.post('/auth/register', userData);
       return response.data;
     } catch (error) {
       throw {
-        response:  {
+        response: {
           data: {
             success: false,
-            message:  error.response?.data?.message || 'Registration failed'
+            message: error.response?.data?.message || 'Registration failed'
           }
         }
       };
     }
   },
 
-  // Verify email with OTP
-  verifyEmail:  async (email, otp) => {
+  verifyEmail: async (email, otp) => {
     try {
-      const response = await api.post('/auth/verify-email', { email, otp });
-      return response. data;
+      const response = await api. post('/auth/verify-email', { email, otp });
+      return response.data;
     } catch (error) {
       throw {
         response: {
           data: {
             success: false,
-            message: error.response?.data?. message || 'Verification failed'
+            message: error.response?.data?.message || 'Verification failed'
           }
         }
       };
     }
   },
 
-  // Resend OTP
   resendOTP: async (email, type) => {
     try {
       const response = await api.post('/auth/resend-otp', { email, type });
       return response.data;
     } catch (error) {
       throw {
-        response:  {
+        response: {
           data: {
             success: false,
-            message:  error.response?.data?.message || 'Failed to resend OTP'
+            message: error.response?. data?.message || 'Failed to resend OTP'
           }
         }
       };
     }
   },
 
-  // Login user
   login: async (credentials) => {
     try {
       const response = await api.post('/auth/login', credentials);
-      return response. data;
+      return response.data;
     } catch (error) {
       throw {
         response: {
           data: {
             success: false,
-            message: error.response?.data?. message || 'Login failed',
-            requiresVerification: error. response?. data?.requiresVerification || false,
+            message: error.response?. data?.message || 'Login failed',
+            requiresVerification: error.response?.data?. requiresVerification || false,
             email: error.response?.data?.email || null
           }
         }
@@ -123,34 +119,29 @@ export const authAPI = {
     }
   },
 
-  // Logout user
   logout: async () => {
     try {
       const response = await api.post('/auth/logout');
-      return response.data;
+      return response. data;
     } catch (error) {
-      // Even if logout fails on server, clear local storage
       console.error('Logout error:', error);
       return { success: true };
     }
   },
 
-  // Get current user
   getMe: async () => {
     try {
       const response = await api.get('/auth/me');
       return response.data;
     } catch (error) {
-      // If getMe fails, clear invalid session
       if (error.response?.status === 401) {
         localStorage.removeItem('token');
-        localStorage. removeItem('user');
+        localStorage.removeItem('user');
       }
       throw error;
     }
   },
 
-  // Forgot password - send OTP
   forgotPassword: async (email) => {
     try {
       const response = await api.post('/auth/forgot-password', { email });
@@ -167,7 +158,6 @@ export const authAPI = {
     }
   },
 
-  // Reset password with OTP
   resetPassword: async (email, otp, newPassword) => {
     try {
       const response = await api.post('/auth/reset-password', { email, otp, newPassword });
@@ -176,8 +166,8 @@ export const authAPI = {
       throw {
         response: {
           data:  {
-            success:  false,
-            message: error. response?.data?.message || 'Password reset failed'
+            success: false,
+            message: error.response?.data?.message || 'Password reset failed'
           }
         }
       };
@@ -188,7 +178,7 @@ export const authAPI = {
 // Donation API endpoints
 export const donationAPI = {
   // Get all donations
-  getAll: async (params = {}) => {
+  getAll:  async (params = {}) => {
     const response = await api.get('/donations', { params });
     return response.data;
   },
@@ -274,7 +264,52 @@ export const notificationAPI = {
   // Mark all notifications as read
   markAllAsRead: async () => {
     const response = await api.put('/notifications/read-all');
-    return response. data;
+    return response.data;
+  }
+};
+
+// Admin API endpoints
+export const adminAPI = {
+  // Get admin stats
+  getStats: async () => {
+    const response = await api.get('/admin/stats');
+    return response.data;
+  },
+
+  // Get all users
+  getUsers: async (params = {}) => {
+    const response = await api.get('/admin/users', { params });
+    return response.data;
+  },
+
+  // Get all donations
+  getDonations: async (params = {}) => {
+    const response = await api.get('/admin/donations', { params });
+    return response.data;
+  },
+
+  // Verify user
+  verifyUser: async (userId) => {
+    const response = await api.put(`/admin/users/${userId}/verify`);
+    return response.data;
+  },
+
+  // Toggle user status
+  toggleUserStatus: async (userId) => {
+    const response = await api. put(`/admin/users/${userId}/toggle-status`);
+    return response.data;
+  },
+
+  // Delete user
+  deleteUser: async (userId) => {
+    const response = await api. delete(`/admin/users/${userId}`);
+    return response.data;
+  },
+
+  // Delete donation
+  deleteDonation: async (donationId) => {
+    const response = await api.delete(`/admin/donations/${donationId}`);
+    return response.data;
   }
 };
 

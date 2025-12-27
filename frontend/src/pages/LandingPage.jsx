@@ -34,7 +34,7 @@ const LandingPage = () => {
             </div>
         </header>
         <div className='py-20 text-center bg-white grid grid-cols-1 gap-10 md:grid-cols-3'>
-          <div className='flex pl-[10vw]'>
+          <div className='flex md:pl-[10vw] justify-center md:justify-normal'>
             <Heart className='w-[50px] text-[#1E7F5C]' />
             <p>Meals Served</p>
           </div>
@@ -45,7 +45,7 @@ const LandingPage = () => {
             Food Waste Prevented
           </div>
         </div>
-        <div className='h-[50vh] bg-slate-100 shadow-lg border border-slate-100 justify-items-center items-center'>
+        <div className='h-[100vh] md:h-[50vh] bg-slate-100 shadow-lg border border-slate-100 justify-items-center items-center'>
           <h2 className='text-3xl text-center mb-12 text-[#2E2E2E] pt-[5vh]'>How it Works?</h2>
           <div className='grid grid-cols-1 gap-10 md:grid-cols-3'>
           <Card step={"1"} icon={<Leaf className='w-12 h-12 text-[#1E7F5C] '/>} desc={"Restaurants post available food with quantity, pickup time, and location details"}/>

@@ -27,15 +27,15 @@ exports.getAdminStats = async (req, res) => {
     const completedDonationsList = await Donation.find({ status: 'Picked Up' }).select('quantity');
     let totalPeopleFed = 0;
     completedDonationsList.forEach(donation => {
-      const match = donation.quantity. match(/\d+/);
+      const match = donation.quantity.match(/\d+/);
       if (match) {
         const num = parseInt(match[0]);
         if (donation.quantity.toLowerCase().includes('meal')) {
-          totalPeopleFed += num;
+          totalPeopleFed += num; // 1 meal = 1 person
         } else if (donation.quantity.toLowerCase().includes('kg')) {
-          totalPeopleFed += num * 3;
+          totalPeopleFed += num*3; // 1 kg = 3 person
         } else {
-          totalPeopleFed += num;
+          totalPeopleFed += num; // anything else means 1 person
         }
       }
     });

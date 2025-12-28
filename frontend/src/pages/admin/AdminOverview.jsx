@@ -19,12 +19,12 @@ const AdminOverview = () => {
     setLoading(true);
     try {
       const response = await adminAPI.getStats();
-      if (response.success) {
+      if(response.success) {
         setStats(response.stats);
       }
-    } catch (error) {
+    }catch (error) {
       console.error('Error fetching stats:', error);
-    } finally {
+    }finally {
       setLoading(false);
     }
   };

@@ -1,11 +1,14 @@
 const Donation = require('../models/Donation');
+const User = require('../models/User');
 
 
 exports.getNGOAnalytics = async (req, res) => {
   try {
-    const ngoId = req.user._id; // Changed from req.user.id to req.user._id
 
+    const ngoId = req.user._id; // Changed from req.user.id to req.user._id
     console.log('📊 Fetching analytics for NGO:', ngoId);
+
+   
 
     // Get current date ranges
     const now = new Date();
@@ -36,7 +39,7 @@ exports.getNGOAnalytics = async (req, res) => {
       ? Math.round(((totalReceived - totalReceivedLastMonth) / totalReceivedLastMonth) * 100)
       : totalReceived > 0 ?  100 : 0;
 
-    // People Fed (estimate based on quantity)
+    //People Fed (estimate based on quantity)
     const donations = await Donation.find({
       acceptedBy: ngoId,
       status: 'Picked Up'
@@ -48,13 +51,13 @@ exports.getNGOAnalytics = async (req, res) => {
       if (match) {
         const num = parseInt(match[0]);
         if (donation.quantity. toLowerCase().includes('meal')) {
-          peopleFed += num;
+          peopleFed += num; //1 meal = 1 person
         } else if (donation.quantity.toLowerCase().includes('kg')) {
-          peopleFed += num * 3;
+          peopleFed += num * 3; //1 kg = 3 persons
         } else if (donation.quantity.toLowerCase().includes('item')) {
-          peopleFed += num;
+          peopleFed += num; //1 item = 1 person
         } else {
-          peopleFed += num;
+          peopleFed += num; // anything other means 1 people fed
         }
       }
     });
@@ -62,7 +65,7 @@ exports.getNGOAnalytics = async (req, res) => {
     console.log('✅ People Fed:', peopleFed);
 
     // People Fed Last Month
-    const donationsLastMonth = await Donation. find({
+    const donationsLastMonth = await Donation.find({
       acceptedBy:  ngoId,
       status:  'Picked Up',
       pickedUpAt: {
@@ -76,7 +79,7 @@ exports.getNGOAnalytics = async (req, res) => {
       const match = donation.quantity.match(/\d+/);
       if (match) {
         const num = parseInt(match[0]);
-        if (donation.quantity. toLowerCase().includes('meal')) {
+        if (donation.quantity.toLowerCase().includes('meal')) {
           peopleFedLastMonth += num;
         } else if (donation.quantity.toLowerCase().includes('kg')) {
           peopleFedLastMonth += num * 3;
@@ -161,7 +164,7 @@ exports.getNGOAnalytics = async (req, res) => {
       analytics
     });
 
-  } catch (error) {
+  }catch (error) {
     console.error('❌ NGO Analytics error:', error);
     res.status(500).json({
       success: false,

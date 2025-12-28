@@ -6,6 +6,7 @@ const connectDB = require('./config/db');
 const ngoRoutes = require('./routes/ngoRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const landingPageRoutes = require('./routes/landingPageRoutes');
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use('/api/donations', require('./routes/donationRoutes'));
 app.use('/api/ngo', ngoRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/landing-page', landingPageRoutes );
 
 // Error handler middleware
 app.use((err, req, res, next) => {

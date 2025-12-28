@@ -181,7 +181,7 @@ const RestaurantDashboard = () => {
                 onClick={() => setShowAddForm(true)}
                 className="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition-colors"
               >
-                Add Your First Donation
+                Add Donation
               </button>
             </div>
           ) : (

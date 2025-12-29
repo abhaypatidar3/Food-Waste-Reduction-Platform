@@ -105,7 +105,7 @@ exports.getMyDonations = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      count: donations. length,
+      count: donations.length,
       data: donations
     });
   } catch (error) {
@@ -275,7 +275,7 @@ exports.markAsPickedUp = async (req, res, next) => {
       });
     }
 
-    donation. status = 'Picked Up';
+    donation.status = 'Picked Up';
     donation.pickedUpAt = new Date();
     donation.isActive = false;
 
@@ -401,23 +401,23 @@ exports.getDonationStats = async (req, res, next) => {
     let foodSavedKg = 0;
 
     donations.forEach(donation => {
-      const match = donation.quantity. match(/(\d+\. ?\d*)/);
+      const match = donation.quantity. match(/(\d+\.?\d*)/);
       if (match) {
         const numericValue = parseFloat(match[1]);
         
         if (donation.quantity.toLowerCase().includes('meal')) {
           mealsSaved += numericValue;
-          foodSavedKg += numericValue * 0.3; // Estimate 0.3 kg per meal
+          foodSavedKg += numericValue * 0.33; // Estimate 0.3 kg per meal
         } else if (donation.quantity.toLowerCase().includes('kg')) {
-          foodSavedKg += numericValue;
           mealsSaved += numericValue * 3; // Estimate 3 meals per kg
+          foodSavedKg += numericValue;
         } else if (donation.quantity.toLowerCase().includes('item')) {
           mealsSaved += numericValue;
-          foodSavedKg += numericValue * 0.2; // Estimate 0.2 kg per item
+          foodSavedKg += numericValue * 0.333; // Estimate 0.2 kg per item
         } else {
           // Default:  treat as items
-          mealsSaved += numericValue * 2;
-          foodSavedKg += numericValue * 0.3;
+          mealsSaved += numericValue;
+          foodSavedKg += numericValue * 0.33;
         }
       }
     });

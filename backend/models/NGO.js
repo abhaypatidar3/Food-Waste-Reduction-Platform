@@ -44,6 +44,24 @@ const ngoSchema = new mongoose.Schema({
   capacity: {
     type: Number,
     default: 50 // Number of people they can serve
+  },
+  registrationNumber: {
+    type:  String
+  },
+  servingArea:  {
+    type: String
+  },
+  capacity: {
+    type: String
+  },
+  description: {
+    type: String
+  },
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    zipCode: String
   }
 });
 

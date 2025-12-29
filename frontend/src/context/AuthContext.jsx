@@ -210,25 +210,25 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout function
-  const logout = async () => {
+   const logout = async () => {
     try {
+      // Call backend logout endpoint
       await authAPI.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Logout API error:', error);
     } finally {
-      // Clear storage and state
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      // Clear all auth data (frontend)
       setUser(null);
-      setIsAuthenticated(false);
+      localStorage. removeItem('token');
+      localStorage.removeItem('user');
       
-      // Navigate to login and prevent going back
-      navigate('/login', { replace: true });
+      // Remove cookie - try multiple methods
+      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname;
+      document.cookie = 'token=; Max-Age=0; path=/;';
       
-      // Prevent back button navigation
-      window.history.pushState(null, '', '/login');
-      
-      window.addEventListener('popstate', preventBack);
+      // Redirect to login
+      navigate('/login');
     }
   };
 

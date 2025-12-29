@@ -15,7 +15,7 @@ exports.createDonation = async (req, res, next) => {
     const populatedDonation = await Donation.findById(donation._id)
       .populate('restaurant', 'organizationName phone email');
 
-    // 🔔 Notify nearby NGOs about new donation
+    //  Notify nearby NGOs about new donation
     await notifyNearbyNGOs(populatedDonation);
 
     res.status(201).json({
@@ -229,7 +229,7 @@ exports.acceptDonation = async (req, res, next) => {
 
     await donation.populate('acceptedBy', 'organizationName email phone');
 
-    // 🔔 Notify restaurant about acceptance
+    //  Notify restaurant about acceptance
     const NGO = require('../models/NGO');
     const ngo = await NGO.findById(req.user._id);
     await notifyRestaurantAcceptance(donation.restaurant._id, donation, ngo);
@@ -295,7 +295,7 @@ exports.markAsPickedUp = async (req, res, next) => {
       }
     }
 
-    // 🔔 Notify NGO about completion
+    //  Notify NGO about completion
     await notifyDonationCompleted(req.user._id, donation, peopleFed);
 
     res.status(200).json({

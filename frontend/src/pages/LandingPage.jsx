@@ -30,8 +30,8 @@ const LandingPage = () => {
     <div className='min-h-screen'>
         <header className="bg-gradient-to-r from-[#1E7F5C] to-[#166651] text-white mx-0">
             <nav className='flex justify-between mx-0 py-4 items-center'>
-              <div className='ml-5'>
-                <Leaf className='inline-block w-6 mr-2'/>
+              <div className='ml-5 bg-[#0d6444] px-3 py-2 group rounded-md text-xl font-semibold shadow-lg hover:shadow-md hover:bg-[#165f4b] transition-all duration-200 hover:rounded-xl'>
+                <Leaf className='inline-block w-6 mr-2 group-hover:rotate-90 transition-all duration-400'/>
                 <span>FoodShare</span>
               </div>
               <div>
@@ -46,7 +46,7 @@ const LandingPage = () => {
                 <h1 className="text-5xl mb-6 max-w-4xl mx-auto">
                   Transform Surplus Food into Hope
                 </h1>
-                <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
+                <p className="text-xl mb-8 opacity-90 max-w-2xl mx-2 md:mx-auto">
                   Connect restaurants and food businesses with NGOs and shelters to reduce waste and feed communities in need
                 </p>
               <div className='flex justify-center gap-4'>
@@ -151,7 +151,7 @@ const LandingPage = () => {
                     <div>
                       <p className="text-white/60 text-sm mb-1">Phone</p>
                       <a href="tel: +911234567890" className="text-white hover:text-[#F4A261] transition-colors">
-                        +91 123-456-7890
+                        +91 978-466-9330
                       </a>
                     </div>
                   </p>
@@ -160,8 +160,8 @@ const LandingPage = () => {
                     <div>
                       <p className="text-white/60 text-sm mb-1">Address</p>
                       <p className="text-white">
-                        123 Green Street<br />
-                        Mumbai, Maharashtra 400001
+                        642/9 Atal dwar main road<br />
+                        Indore, MP 452001, India
                       </p>
                     </div>
                   </p>

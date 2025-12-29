@@ -22,7 +22,7 @@ exports.getNGOAnalytics = async (req, res) => {
       status: 'Picked Up'
     });
 
-    console.log('✅ Total Received:', totalReceived);
+    console.log(' Total Received:', totalReceived);
 
     // Total Received Last Month
     const totalReceivedLastMonth = await Donation.countDocuments({
@@ -62,7 +62,7 @@ exports.getNGOAnalytics = async (req, res) => {
       }
     });
 
-    console.log('✅ People Fed:', peopleFed);
+    console.log(' People Fed:', peopleFed);
 
     // People Fed Last Month
     const donationsLastMonth = await Donation.find({
@@ -99,7 +99,7 @@ exports.getNGOAnalytics = async (req, res) => {
       status: 'Accepted'
     });
 
-    console.log('✅ Active Acceptances:', activeAcceptances);
+    console.log(' Active Acceptances:', activeAcceptances);
 
     // Active Acceptances Last Month
     const activeAcceptancesLastMonth = await Donation.countDocuments({
@@ -122,7 +122,7 @@ exports.getNGOAnalytics = async (req, res) => {
       pickedUpAt: { $gte: startOfMonth }
     });
 
-    console.log('✅ This Month:', thisMonth);
+    console.log(' This Month:', thisMonth);
 
     // Last Month total
     const lastMonthTotal = await Donation.countDocuments({
@@ -157,7 +157,7 @@ exports.getNGOAnalytics = async (req, res) => {
       }
     };
 
-    console.log('📊 Final Analytics:', analytics);
+    console.log(' Final Analytics:', analytics);
 
     res.status(200).json({
       success: true,
@@ -165,7 +165,7 @@ exports.getNGOAnalytics = async (req, res) => {
     });
 
   }catch (error) {
-    console.error('❌ NGO Analytics error:', error);
+    console.error(' NGO Analytics error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Lock, Leaf, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, Leaf, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { validateEmail, validatePassword } from '../../utils/validation';
+
 
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email:  '',
     password: '',
@@ -168,7 +170,7 @@ const Login = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
                   value={formData.password}
@@ -179,6 +181,17 @@ const Login = () => {
                     errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-emerald-500'
                   } rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`}
                 />
+                <button
+                type="button"
+                onClick={() => setShowPassword(! showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                >
+                {showPassword ? (
+                  <EyeOff size={20} />
+                ) : (
+                  <Eye size={20} />
+                )}
+              </button>
               </div>
               {errors. password && (
                 <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">

@@ -3,8 +3,11 @@ import { useState, useEffect } from 'react';
 import { getNotifications } from '../../services/notificationService';
 import { X, Menu } from 'lucide-react';
 import {useAdmin} from '../../context/AdminContext';
+import { removeCookie } from '../../utils/cookies';
+import { useAuth } from '../../context/AuthContext';
 
 const Sidebar = ({ role, isOpen, onClose }) => {
+   const { logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -14,7 +17,7 @@ const Sidebar = ({ role, isOpen, onClose }) => {
   useEffect(() => {
     // Only fetch notifications for NGO and Restaurant (not Admin)
     if (role !== 'admin') {
-      fetchNotificationCount();
+      fetchNotificationCount ();
       
       // Poll for new notifications every 30 seconds
       const interval = setInterval(fetchNotificationCount, 30000);
@@ -36,20 +39,26 @@ const Sidebar = ({ role, isOpen, onClose }) => {
 
   const isActive = (path) => location.pathname === path;
 
-  const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      setLoading(true);
-      try {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/login');
-      } catch (error) {
-        console.error('Logout error:', error);
-      } finally {
-        setLoading(false);
-      }
+const handleLogout = async () => {
+ 
+  if (window.confirm('Are you sure you want to logout? ')) {
+    setLoading(true);
+    
+    console.log('🔵 Before logout - Cookies:', document.cookie);
+    console.log('🔵 Before logout - LocalStorage:', localStorage.getItem('token'));
+    
+    try {
+      await logout();
+      
+      console.log('🟢 After logout - Cookies:', document.cookie);
+      console.log('🟢 After logout - LocalStorage:', localStorage.getItem('token'));
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }
+};
 
   const handleNavClick = (path) => {
     navigate(path);

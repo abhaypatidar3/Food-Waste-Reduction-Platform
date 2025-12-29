@@ -29,13 +29,13 @@ exports.lpAnalytics = async (req, res) => {
             totalfoodServed: totalfoodServed
         };
 
-        console.log('📊 Landing Page Analytics:', analytics);
+        console.log(' Landing Page Analytics:', analytics);
         res.status(200).json({
           success: true,
           analytics
         });
     }catch (error) {
-        console.error('❌ Landing Page Analytics error:', error);
+        console.error(' Landing Page Analytics error:', error);
         res.status(500).json({
           success: false,
           message: 'Server error',

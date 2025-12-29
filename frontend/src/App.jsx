@@ -17,6 +17,8 @@ import RestaurantHistory from './pages/restaurant/RestaurantHistory';
 import RestaurantDonations from './pages/restaurant/RestaurantDonations';
 import AddDonation from './pages/restaurant/AddDonation';
 import RestaurantNotifications from './pages/restaurant/RestaurantNotifications';
+import RestaurantProfile from './pages/restaurant/RestaurantProfile';
+import NGOProfile from './pages/ngo/NGOProfile';
 
 function App(){
   return (
@@ -102,6 +104,22 @@ function App(){
                <RestaurantNotifications />
              </ProtectedRoute>
             }
+        />
+        <Route
+          path="/restaurant/settings"
+          element={
+          <ProtectedRoute allowedRoles={['restaurant']}>
+            <RestaurantProfile />
+          </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ngo/settings"
+          element={
+            <ProtectedRoute allowedRoles={['ngo']}>
+              <NGOProfile />
+            </ProtectedRoute>
+          }
         />
 
         <Route path="/" element={<Navigate to="/login" replace />} />

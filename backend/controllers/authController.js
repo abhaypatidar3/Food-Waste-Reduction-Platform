@@ -11,7 +11,7 @@ const { sendVerificationOTP, sendPasswordResetOTP } = require('../utils/emailSer
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    console.log('📝 Registration attempt with data:', req.body);
+    console.log(' Registration attempt with data:', req.body);
 
     const {
       email,
@@ -95,7 +95,7 @@ exports.register = async (req, res, next) => {
     });
 
   } catch (error) {
-    console.error('❌ Registration error:', error);
+    console.error(' Registration error:', error);
     
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
@@ -172,7 +172,7 @@ exports.verifyEmail = async (req, res) => {
     sendTokenResponse(fullUser, 200, res);
 
   } catch (error) {
-    console.error('❌ Email verification error:', error);
+    console.error(' Email verification error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error during verification'
@@ -243,7 +243,7 @@ exports. resendOTP = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Resend OTP error:', error);
+    console.error(' Resend OTP error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -275,7 +275,7 @@ exports.login = async (req, res, next) => {
     }
 
     // Check if email is verified
-    if (!user. isVerified) {
+    if (!user.isVerified) {
       return res.status(403).json({
         success: false,
         message: 'Please verify your email before logging in',
@@ -301,7 +301,7 @@ exports.login = async (req, res, next) => {
     }
 
     let fullUser;
-    if (user. role === 'restaurant') {
+    if (user.role === 'restaurant') {
       fullUser = await Restaurant.findById(user._id);
     } else if (user.role === 'ngo') {
       fullUser = await NGO.findById(user._id);
@@ -312,7 +312,7 @@ exports.login = async (req, res, next) => {
     sendTokenResponse(fullUser, 200, res);
 
   } catch (error) {
-    console.error('❌ Login error:', error);
+    console.error(' Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error during login'
@@ -369,7 +369,7 @@ exports.forgotPassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Forgot password error:', error);
+    console.error(' Forgot password error:', error);
     res.status(500).json({
       success: false,
       message:  'Server error'
@@ -422,7 +422,7 @@ exports.resetPassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Reset password error:', error);
+    console.error(' Reset password error:', error);
     
     if (error.name === 'ValidationError') {
       const messages = Object.values(error. errors).map(err => err.message);
@@ -439,24 +439,31 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// @desc    Logout user
-// @route   POST /api/auth/logout
-// @access  Private
-exports.logout = async (req, res) => {
-  res.cookie('token', 'none', {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true
-  });
 
-  res.status(200).json({
-    success: true,
-    message: 'Logged out successfully'
-  });
+exports.logout = async (req, res) => {
+  try {
+    // Clear cookie on backend
+    res.cookie('token', 'none', {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    console.error(' Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
 };
 
-// @desc    Get current logged in user
-// @route   GET /api/auth/me
-// @access  Private
+
 exports.getMe = async (req, res) => {
   try {
     let user;
@@ -475,6 +482,66 @@ exports.getMe = async (req, res) => {
     });
   } catch (error) {
     console.error('Get me error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const {
+      organizationName,
+      phone,
+      address,
+      description,
+      operatingHours, // For restaurants
+      registrationNumber, // For NGOs
+      servingArea, // For NGOs
+      capacity // For NGOs
+    } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update fields
+    if (organizationName) user.organizationName = organizationName;
+    if (phone) user.phone = phone;
+    if (address) user.address = address;
+    if (description) user.description = description;
+
+    // Restaurant-specific fields
+    if (user.role === 'restaurant' && operatingHours) {
+      user.operatingHours = operatingHours;
+    }
+
+    // NGO-specific fields
+    if (user.role === 'ngo') {
+      if (registrationNumber) user.registrationNumber = registrationNumber;
+      if (servingArea) user.servingArea = servingArea;
+      if (capacity) user.capacity = capacity;
+    }
+
+    await user.save();
+
+    // Return updated user without password
+    const updatedUser = await User.findById(userId).select('-password');
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error(' Update profile error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'

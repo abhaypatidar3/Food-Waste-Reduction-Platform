@@ -8,7 +8,7 @@ const NGO = require('../models/NGO');
 // @access  Private (Admin only)
 exports.getAdminStats = async (req, res) => {
   try {
-    console.log('📊 Fetching admin stats...');
+    console.log(' Fetching admin stats...');
 
     // User statistics
     const totalUsers = await User.countDocuments();
@@ -115,7 +115,7 @@ exports.getAdminStats = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Admin stats error:', error);
+    console.error(' Admin stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
@@ -169,7 +169,7 @@ exports.getAllUsers = async (req, res) => {
       totalUsers: count
     });
   } catch (error) {
-    console.error('❌ Get users error:', error);
+    console.error(' Get users error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -211,7 +211,7 @@ exports.getAllDonations = async (req, res) => {
       totalDonations: count
     });
   } catch (error) {
-    console.error('❌ Get donations error:', error);
+    console.error(' Get donations error:', error);
     res.status(500).json({
       success: false,
       message:  'Server error'
@@ -247,7 +247,7 @@ exports.verifyUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Verify user error:', error);
+    console.error(' Verify user error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -294,7 +294,7 @@ exports.toggleUserStatus = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Toggle user status error:', error);
+    console.error(' Toggle user status error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -331,7 +331,7 @@ exports.deleteUser = async (req, res) => {
       message: 'User deleted successfully'
     });
   } catch (error) {
-    console.error('❌ Delete user error:', error);
+    console.error(' Delete user error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -360,7 +360,7 @@ exports.deleteDonation = async (req, res) => {
       message: 'Donation deleted successfully'
     });
   } catch (error) {
-    console.error('❌ Delete donation error:', error);
+    console.error(' Delete donation error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'

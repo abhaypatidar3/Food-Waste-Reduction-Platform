@@ -26,8 +26,8 @@ const RestaurantDonations = () => {
       const response = await getMyDonations();
       if (response.success) {
         // Filter only active donations (not picked up)
-        const activeDonations = response.data. filter(
-          d => d.status !== 'Picked Up' && d.isActive
+        const activeDonations = response.data.filter(
+          d => d.status === 'Picked Up' || d.status === 'Pending' || d.status === 'Accepted'
         );
         setDonations(activeDonations);
       }
@@ -42,7 +42,7 @@ const RestaurantDonations = () => {
     if (activeTab === 'all') {
       setFilteredDonations(donations);
     } else if (activeTab === 'pending') {
-      setFilteredDonations(donations. filter(d => d.status === 'Pending'));
+      setFilteredDonations(donations.filter(d => d.status === 'Pending'));
     } else if (activeTab === 'accepted') {
       setFilteredDonations(donations.filter(d => d.status === 'Accepted'));
     } else if (activeTab === 'pickedUp') {
@@ -104,7 +104,7 @@ const RestaurantDonations = () => {
                   : 'text-gray-600 border-transparent hover:text-green-600'
               }`}
             >
-              All ({counts.all})
+            All({counts.all})
             </button>
             <button
               onClick={() => setActiveTab('pending')}
@@ -114,7 +114,7 @@ const RestaurantDonations = () => {
                   :  'text-gray-600 border-transparent hover:text-green-600'
               }`}
             >
-              Pending ({counts.pending})
+            Pending({counts.pending})
             </button>
             <button
               onClick={() => setActiveTab('accepted')}
@@ -124,7 +124,7 @@ const RestaurantDonations = () => {
                   :  'text-gray-600 border-transparent hover:text-green-600'
               }`}
             >
-              Accepted ({counts.accepted})
+            Accepted({counts.accepted})
             </button>
             <button
               onClick={() => setActiveTab('pickedUp')}

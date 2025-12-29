@@ -92,7 +92,7 @@ const DonationCard = ({ donation, onUpdate }) => {
         {donation.acceptedBy && (
           <div className="flex text-sm">
             <span className="font-semibold text-gray-600 min-w-[140px]">Accepted By:</span>
-            <span className="text-gray-800">{donation.acceptedBy. name}</span>
+            <span className="text-gray-800">{donation.acceptedBy.organizationName}</span>
           </div>
         )}
 

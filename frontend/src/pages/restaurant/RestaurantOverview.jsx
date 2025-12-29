@@ -170,7 +170,7 @@ const RestaurantOverview = () => {
             </button>
             <button
               onClick={() => navigate('/restaurant/history')}
-              className="px-4 sm:px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg border-2 border-gray-300 hover:border-green-600 hover:text-green-600 transition-colors text-sm sm: text-base"
+              className="px-4 sm:px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg border-2 border-gray-300 hover:border-green-600 hover:text-green-600 transition-colors text-sm sm:text-base"
             >
               View History
             </button>

@@ -233,7 +233,7 @@ const AddDonationForm = ({ onSuccess, onCancel }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 disabled: opacity-60 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+            className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-2.5 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
           >
             {loading ? 'Adding...' : 'Add Donation'}
           </button>

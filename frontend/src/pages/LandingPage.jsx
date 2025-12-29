@@ -73,14 +73,14 @@ const LandingPage = () => {
           <div className='flex md:pl-[10vw] gap-3 text-left justify-center md:justify-normal'>
             <TrendingUp className='w-[50px] h-[50px] mt-1 text-[#1E7F5C]' />
             <div>
-              <p className='text-4xl'>{analytics?.totalfoodServed || 0}</p>
+              <p className='text-4xl'>{analytics?.totalfoodServed || 0} Kg</p>
               <p className='text-slate-600'>Food Waste Prevented</p>
             </div>
           </div>
         </div>
         <div className='h-[100vh] md:h-[50vh] bg-slate-100 shadow-lg border border-slate-100 justify-items-center items-center'>
           <h2 className='text-3xl text-center mb-12 text-[#2E2E2E] pt-[5vh]'>How it Works?</h2>
-          <div className='grid grid-cols-1 md:mx-[5vw] md:grid-cols-3 place-items-center gap-5 md:gap-0'>
+          <div className='grid grid-cols-1 md:mx-[5vw] md:grid-cols-3 place-items-center gap-5 md:gap-8'>
           <Card 
               step={"1"} 
               icon={<Leaf className='w-12 h-12 text-[#1E7F5C] '/>} 

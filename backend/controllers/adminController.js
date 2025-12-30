@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Donation = require('../models/Donation');
 const Restaurant = require('../models/Restaurant');
 const NGO = require('../models/NGO');
+const Admin = require('../models/Admin');
 
 // @desc    Get admin dashboard stats
 // @route   GET /api/admin/stats

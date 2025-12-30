@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
 const {
+  getReports,
   getAdminStats,
   getAllUsers,
   getAllDonations,
@@ -17,6 +18,7 @@ router.use(authorize('admin'));
 
 // Stats
 router.get('/stats', getAdminStats);
+router.get('/reports', getReports);
 
 // Users management
 router.get('/users', getAllUsers);

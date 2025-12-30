@@ -19,6 +19,7 @@ import AddDonation from './pages/restaurant/AddDonation';
 import RestaurantNotifications from './pages/restaurant/RestaurantNotifications';
 import RestaurantProfile from './pages/restaurant/RestaurantProfile';
 import NGOProfile from './pages/ngo/NGOProfile';
+import AnalyticsPage from './pages/admin/AnalyticsPage';
 
 function App(){
   return (
@@ -85,6 +86,14 @@ function App(){
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminUsers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AnalyticsPage/>
               </ProtectedRoute>
             }
           />

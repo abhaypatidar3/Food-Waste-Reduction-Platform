@@ -87,7 +87,7 @@ const restaurantMenuItems = [
     { icon:  '▦', label: 'Dashboard', path: '/admin/dashboard' },
     { icon: '👥', label: 'User Management', path: '/admin/users', onClick: ()=>setFilters({ ...filters, status:'all' }) },
     { icon: '📦', label: 'Donations', path: '/admin/donations' },
-    { icon: '📈', label: 'Reports' },
+    { icon: '📈', label: 'Reports', path: '/admin/reports' },
   ];
 
   // Select menu items based on role

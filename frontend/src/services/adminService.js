@@ -37,6 +37,12 @@ export const adminAPI = {
     return response.data;
   },
 
+  // Get reports
+  getReports: async () => {
+    const response = await api.get('/admin/reports');
+    return response.data;
+  },
+
   // Delete donation
   deleteDonation: async (donationId) => {
     const response = await api.delete(`/admin/donations/${donationId}`);

@@ -368,6 +368,192 @@ exports.deleteDonation = async (req, res) => {
   }
 };
 
+
+
+exports.getReports = async (req, res) => {
+  try {
+    // 1. USER STATISTICS
+    const totalUsers = await User.countDocuments();
+    const totalRestaurants = await Restaurant.countDocuments();
+    const totalNGOs = await NGO.countDocuments();
+    const totalAdmins = await Admin.countDocuments();
+
+    // Verified vs Unverified
+    const verifiedUsers = await User.countDocuments({ isVerified: true });
+    const unverifiedUsers = await User.countDocuments({ isVerified: false });
+
+    // Active vs Inactive
+    const activeUsers = await User.countDocuments({ isActive: true });
+    const inactiveUsers = await User. countDocuments({ isActive: false });
+
+    // 2. TIME-BASED ANALYTICS
+    const now = new Date();
+    
+    // Today
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const usersToday = await User.countDocuments({ createdAt: { $gte: startOfToday } });
+
+    // This Week
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const usersThisWeek = await User. countDocuments({ createdAt:  { $gte: startOfWeek } });
+
+    // This Month
+    const startOfMonth = new Date(now. getFullYear(), now.getMonth(), 1);
+    const usersThisMonth = await User.countDocuments({ createdAt: { $gte: startOfMonth } });
+
+    // Last 30 Days Growth
+    const last30Days = new Date();
+    last30Days.setDate(last30Days.getDate() - 30);
+    
+    const userGrowthData = await User.aggregate([
+      {
+        $match: { createdAt: { $gte: last30Days } }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format:  "%Y-%m-%d", date:  "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      }
+    ]);
+
+    // 3. ROLE DISTRIBUTION
+    const roleDistribution = [
+      { role: 'Restaurant', count: totalRestaurants, percentage: ((totalRestaurants / totalUsers) * 100).toFixed(1) },
+      { role: 'NGO', count: totalNGOs, percentage: ((totalNGOs / totalUsers) * 100).toFixed(1) },
+      { role: 'Admin', count: totalAdmins, percentage: ((totalAdmins / totalUsers) * 100).toFixed(1) }
+    ];
+
+    // 4. VERIFICATION STATUS BY ROLE
+    const restaurantVerified = await Restaurant.countDocuments({ isVerified: true });
+    const restaurantUnverified = await Restaurant. countDocuments({ isVerified:  false });
+    const ngoVerified = await NGO.countDocuments({ isVerified: true });
+    const ngoUnverified = await NGO.countDocuments({ isVerified: false });
+
+    const verificationByRole = {
+      restaurants: {
+        total: totalRestaurants,
+        verified:  restaurantVerified,
+        unverified: restaurantUnverified,
+        verificationRate: totalRestaurants > 0 ?  ((restaurantVerified / totalRestaurants) * 100).toFixed(1) : 0
+      },
+      ngos: {
+        total: totalNGOs,
+        verified:  ngoVerified,
+        unverified: ngoUnverified,
+        verificationRate: totalNGOs > 0 ?  ((ngoVerified / totalNGOs) * 100).toFixed(1) : 0
+      }
+    };
+
+    // 5. RECENT ACTIVITY
+    const recentUsers = await User.find()
+      .select('email role isVerified createdAt')
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    // Get full details
+    const recentUsersWithDetails = await Promise.all(
+      recentUsers.map(async (user) => {
+        let fullUser;
+        if (user.role === 'restaurant') {
+          fullUser = await Restaurant.findById(user._id);
+        } else if (user. role === 'ngo') {
+          fullUser = await NGO.findById(user._id);
+        } else {
+          fullUser = await Admin.findById(user._id);
+        }
+        return {
+          id: fullUser._id,
+          name: fullUser.organizationName || fullUser.fullName || 'N/A',
+          email: fullUser.email,
+          role: fullUser.role,
+          isVerified: fullUser. isVerified,
+          createdAt: fullUser.createdAt
+        };
+      })
+    );
+
+    // 6. MONTHLY REGISTRATION TRENDS (Last 6 months)
+    const last6Months = new Date();
+    last6Months.setMonth(last6Months.getMonth() - 6);
+
+    const monthlyTrends = await User.aggregate([
+      {
+        $match:  { createdAt: { $gte: last6Months } }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" }
+          },
+          count:  { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id.year": 1, "_id.month": 1 }
+      }
+    ]);
+
+    // Format monthly trends
+    const monthlyTrendsFormatted = monthlyTrends.map(item => ({
+      month: `${item._id.year}-${String(item._id.month).padStart(2, '0')}`,
+      count: item.count
+    }));
+
+    // 7. USER STATUS OVERVIEW
+    const statusOverview = [
+      { status: 'Active & Verified', count: await User.countDocuments({ isActive: true, isVerified: true }) },
+      { status: 'Active & Unverified', count: await User.countDocuments({ isActive: true, isVerified: false }) },
+      { status: 'Inactive & Verified', count: await User. countDocuments({ isActive: false, isVerified: true }) },
+      { status: 'Inactive & Unverified', count: await User.countDocuments({ isActive: false, isVerified: false }) }
+    ];
+
+    // Compile all reports
+    const reports = {
+      overview: {
+        totalUsers,
+        totalRestaurants,
+        totalNGOs,
+        totalAdmins,
+        verifiedUsers,
+        unverifiedUsers,
+        activeUsers,
+        inactiveUsers,
+        verificationRate: ((verifiedUsers / totalUsers) * 100).toFixed(1)
+      },
+      timeBasedAnalytics: {
+        today: usersToday,
+        thisWeek: usersThisWeek,
+        thisMonth: usersThisMonth,
+        dailyGrowth: userGrowthData
+      },
+      roleDistribution,
+      verificationByRole,
+      recentActivity:  recentUsersWithDetails,
+      monthlyTrends: monthlyTrendsFormatted,
+      statusOverview
+    };
+
+    res.status(200).json({
+      success: true,
+      data: reports
+    });
+
+  } catch (error) {
+    console.error('Get reports error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching reports'
+    });
+  }
+};
+
 // module.exports = {
 //   getAdminStats,
 //   getAllUsers,

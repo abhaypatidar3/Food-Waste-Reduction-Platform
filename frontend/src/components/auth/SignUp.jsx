@@ -4,7 +4,8 @@ import { authAPI } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Leaf, Upload, ChefHat, Heart, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { validateEmail, validatePassword, validatePhone, validateOrganizationName } from '../../utils/validation';
+import { registerSchema } from '../../utils/validation';
+import * as Yup from 'yup';
 
 const Signup = () => {
   const { register } = useAuth();
@@ -59,62 +60,21 @@ const Signup = () => {
       }
     }
   };
+  
 
-  const validateForm = () => {
-    const newErrors = {};
-    
-    const orgValidation = validateOrganizationName(formData.organizationName);
-    if (! orgValidation.isValid) {
-      newErrors.organizationName = orgValidation.error;
-    }
-    
-    const emailValidation = validateEmail(formData.email);
-    if (!emailValidation. isValid) {
-      newErrors.email = emailValidation.error;
-    }
-    
-    const phoneValidation = validatePhone(formData.phone);
-    if (!phoneValidation.isValid) {
-      newErrors.phone = phoneValidation.error;
-    }
-    
-    if (! formData.address. trim()) {
-      newErrors.address = 'Address is required';
-    }
-    
-    const passwordValidation = validatePassword(formData.password);
-    if (!passwordValidation.isValid) {
-      newErrors.password = passwordValidation.error;
-    }
-    
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    
-    if (!formData.agreeToTerms) {
-      newErrors.agreeToTerms = 'You must agree to the terms and conditions';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-const navigate = useNavigate();
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  setErrors({});
-  
-  if (!validateForm()) {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    return;
-  }
-  
-  setLoading(true);
 
-  try {
-    const registrationData = {
+  const navigate = useNavigate();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    let result;
+    // setErrors({});
+    try {
+      result =await registerSchema.validate(formData, { abortEarly: false });
+      console.log('form submitted', formData);
+
+      setLoading(true);
+
+      const registrationData = {
       email:  formData.email. trim(),
       password: formData.password,
       role: userType,
@@ -124,7 +84,6 @@ const handleSubmit = async (e) => {
       certificateUrl: null
     };
 
-    // Call API directly (don't use AuthContext register)
     const response = await authAPI.register(registrationData);
 
     if (response.success) {
@@ -134,19 +93,25 @@ const handleSubmit = async (e) => {
       setErrors({ submit: response.message || 'Registration failed.  Please try again.' });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  } catch (error) {
-    console.error('Signup error:', error);
-    setErrors({ submit: error.response?. data?.message || 'Unable to connect to server. Please try again.' });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } finally {
-    setLoading(false);
-  }
-  if (response.requiresVerification) {
-  navigate('/verify-email', { state: { email:  formData.email } });
-  return;
-}
 
-};
+    } catch (error) {
+      const newError = {};
+
+      error.inner.forEach((err)=>{
+        newError[err.path] = err.message; 
+      })
+      setErrors(newError);
+      if (!result) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      return;
+    }
+
+  
+  
+  // setLoading(true);
+  };
  
 
   return (
@@ -217,7 +182,7 @@ const handleSubmit = async (e) => {
               <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium">Registration Failed</p>
-                <p className="text-sm">{errors. submit}</p>
+                <p className="text-sm">{errors.submit}</p>
               </div>
             </div>
           )}
@@ -241,10 +206,10 @@ const handleSubmit = async (e) => {
                 } rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`}
               />
             </div>
-            {errors. organizationName && (
+            {errors.organizationName && (
               <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                 <AlertCircle size={14} />
-                {errors. organizationName}
+                {errors.organizationName}
               </p>
             )}
           </div>
@@ -348,7 +313,7 @@ const handleSubmit = async (e) => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Min.  6 characters"
+                  placeholder="Min. 6 characters"
                   autoComplete="new-password"
                   className={`w-full pl-11 pr-4 py-3 border ${
                     errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-emerald-500'

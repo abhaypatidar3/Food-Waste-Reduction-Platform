@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, Leaf, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { validateEmail, validatePassword } from '../../utils/validation';
+import * as Yup from 'yup';
 
 
 const Login = () => {
@@ -38,24 +39,11 @@ const Login = () => {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    
-    // Validate email
-    const emailValidation = validateEmail(formData.email);
-    if (!emailValidation. isValid) {
-      newErrors.email = emailValidation.error;
-    }
 
-    // Validate password
-    const passwordValidation = validatePassword(formData.password);
-    if (!passwordValidation.isValid) {
-      newErrors.password = passwordValidation. error;
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const LoginSchema = Yup.object().shape({
+    email: Yup.string().email('email is invalid').matches(/^[a-zA-Z][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,'Email must start with a letter').required('Email is required'),
+    password: Yup.string().required('Password is required').min(6,'Password must be at least 6 characters')
+  })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,19 +52,17 @@ const Login = () => {
     if (!isFormReady) return;
 
     setErrors({});
-    
-    if (!validateForm()) return;
-    
     setLoading(true);
+    
+    
 
     try {
-      const result = await login({
-        email: formData.email.trim(),
-        password: formData.password
-      });
+      await LoginSchema.validate(formData, { abortEarly: false });
+      const result = await login({email: formData.email.trim(), password: formData.password});
 
       if (result.success) {
         // ✅ Redirect based on user role
+        setLoading(true);
         const user = result.user || JSON.parse(localStorage.getItem('user') || '{}');
         const role = user.role;
 
@@ -99,8 +85,19 @@ const Login = () => {
         setLoading(false);
       }
     } catch (error) {
-      console.error('Login error:', error);
-      setErrors({ submit: 'Unable to connect to server. Please try again.' });
+      if (error.inner) {
+        const newErrors = {};
+        error.inner.forEach((err) => {
+          newErrors[err.path] = err. message;
+        });
+        setErrors(newErrors);
+      } else {
+        // Handle API/network errors
+        console.error('Login error:', error);
+        setErrors({ 
+          submit: error.response?.data?.message || 'Unable to connect to server. Please try again.' 
+        });
+      }
       setLoading(false);
     }
   };

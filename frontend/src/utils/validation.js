@@ -1,4 +1,19 @@
 
+import * as Yup from 'yup';
+
+
+export const registerSchema = Yup.object().shape({
+    organizationName: Yup.string().required('Organization Name is required').min(3, 'Organization Name must be at least 3 characters').max(100, 'Organization Name must be at most 100 characters'),
+    email: Yup.string().required('email is required').email('Invalid email format'),
+    password: Yup.string().required('Password is required').matches('^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=[\\]{};\'":\\\\|,.<>/?]).{6,}$', 'Password must be at least 6 characters and include uppercase, lowercase, and special character'),
+    phone: Yup.string().required('Phone Number is required').matches('^\\d{10}$', 'Phone number must be exactly 10 digits'),
+    address: Yup.string().required('Address is required'),
+    agreeToTerms: Yup.boolean().oneOf([true], 'You must agree to the terms and conditions'),
+    confirmPassword: Yup.string().oneOf([Yup.ref('password'),null],'Passwords should match')
+});
+
+
+
 export const validateEmail = (email) => {
   if (!email || ! email.trim()) {
     return { isValid: false, error: 'Email is required' };
@@ -87,7 +102,7 @@ export const validatePhone = (phone) => {
     return { isValid: false, error: 'Phone number is required' };
   }
 
-  const digitsOnly = phone.replace(/\D/g, '');
+  const digitsOnly = phone.replace(/\D/g,'');
   
   if (digitsOnly.length !== 10) {
     return { isValid: false, error: 'Phone number must be exactly 10 digits' };

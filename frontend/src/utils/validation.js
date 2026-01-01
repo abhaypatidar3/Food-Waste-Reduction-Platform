@@ -12,7 +12,10 @@ export const registerSchema = Yup.object().shape({
     confirmPassword: Yup.string().oneOf([Yup.ref('password'),null],'Passwords should match')
 });
 
-
+const LoginSchema = Yup.object().shape({
+    email: Yup.string().email('email is invalid').matches(/^[a-zA-Z][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,'Email must start with a letter').required('Email is required'),
+    password: Yup.string().required('Password is required').min(6,'Password must be at least 6 characters')
+})
 
 export const validateEmail = (email) => {
   if (!email || ! email.trim()) {

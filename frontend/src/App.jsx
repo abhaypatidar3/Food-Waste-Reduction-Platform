@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Login from './components/auth/Login';
-import Signup from './components/auth/Signup'
+import Signup from './components/auth/SignUp'
 import VerifyEmail from './components/auth/VerifyEmail';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ProtectedRoute from './components/common/ProtectedRoute';

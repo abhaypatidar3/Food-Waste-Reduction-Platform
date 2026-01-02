@@ -3,28 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Leaf, Users, TrendingUp, MapPin, Clock, Heart, Mail, Phone, MapPinIcon, Facebook, Twitter, Instagram, Linkedin, Github } from 'lucide-react';
 import Card from '../components/Landingpage/Card';
 import { landingPageAPI } from '../services/api';
+import {useQuery} from '@tanstack/react-query';
 
 const LandingPage = () => {
-  const [loading, setLoading] = useState(true);
-  const [analytics, setAnalytics] = useState(null);
   
-  useEffect(()=>{
-    fetchAnalytics();
-  },[]);
-
-  const fetchAnalytics = async ()=>{
-    setLoading(true);
-    try{
+  const {data, isLoading, isError} = useQuery({
+    queryKey: ['LandingPageAnalytics'],
+    queryFn: async ()=>{
       const response = await landingPageAPI.getAnalytics();
-      if(response.success){
-        setAnalytics(response.analytics);
-      }
-    }catch (error){
-      console.error('Error fetching landing page analytics:', error);
-    } finally{
-      setLoading(false);
-    };
-  };
+      return response;
+    },
+    staleTime: 60*1000, // 1 minute tk data fresh rhega
+    retry: 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
+
+  const analytics = data?.analytics || null;
 
   return (
     <div className='min-h-screen'>
@@ -47,7 +42,7 @@ const LandingPage = () => {
                   Transform Surplus Food into Hope
                 </h1>
                 <p className="text-xl mb-8 opacity-90 max-w-2xl mx-2 md:mx-auto">
-                  Connect restaurants and food businesses with NGOs and shelters to reduce waste and feed communities in need
+                  Connect restaurants and food businesses with NGOs and shelters to reduce food waste and feed communities in need
                 </p>
               <div className='flex justify-center gap-4'>
                 <Link to='/login' className='border border-white hover:bg-white/10 px-6 py-3 rounded-md'>Donate food</Link>
@@ -137,7 +132,7 @@ const LandingPage = () => {
               <div className="md:w-[50vw]">
                 <h3 className="text-lg font-bold mb-6">Get In Touch</h3>
                 <ul className="space-y-4 sm:space-y-0 md:flex gap-4">
-                  <p className="flex gap-3">
+                  <div className="flex gap-3">
                     <Mail className="w-5 h-5 text-[#F4A261] flex-shrink-0 mt-1" />
                     <div>
                       <p className="text-white/60 text-sm mb-1">Email</p>
@@ -145,8 +140,8 @@ const LandingPage = () => {
                         abhay@foodshare.com
                       </a>
                     </div>
-                  </p>
-                  <p className="flex mt-0 mb-4 gap-3">
+                  </div>
+                  <div className="flex mt-0 mb-4 gap-3">
                     <Phone className="w-5 h-5 text-[#F4A261] flex-shrink-0 " />
                     <div>
                       <p className="text-white/60 text-sm mb-1">Phone</p>
@@ -154,8 +149,8 @@ const LandingPage = () => {
                         +91 978-466-9330
                       </a>
                     </div>
-                  </p>
-                  <p className="flex items-start gap-3">
+                  </div>
+                  <div className="flex items-start gap-3">
                     <MapPinIcon className="w-5 h-5 text-[#F4A261] flex-shrink-0 mt-1" />
                     <div>
                       <p className="text-white/60 text-sm mb-1">Address</p>
@@ -164,7 +159,7 @@ const LandingPage = () => {
                         Indore, MP 452001, India
                       </p>
                     </div>
-                  </p>
+                  </div>
                 </ul>
               </div>
             </div>

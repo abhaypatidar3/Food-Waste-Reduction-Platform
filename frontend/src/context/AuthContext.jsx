@@ -137,40 +137,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login function
-  const login = async (credentials) => {
-    try {
-      const response = await authAPI.login(credentials);
-      
-      if (response.success) {
-        localStorage.setItem('token', response. token);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        
-        setUser(response.user);
-        setIsAuthenticated(true);
-
-        redirectToDashboard(response.user.role);
-
-        return { success: true };
-      } else {
-        return { 
-          success: false, 
-          message: response.message || 'Login failed',
-          requiresVerification: response.requiresVerification || false,
-          email: response.email || null
-        };
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Invalid email or password',
-        requiresVerification: error.response?.data?.requiresVerification || false,
-        email: error.response?. data?.email || null
-      };
-    }
-  };
-
   // Forgot Password function
   const forgotPassword = async (email) => {
     try {
@@ -268,7 +234,6 @@ export const AuthProvider = ({ children }) => {
     register,
     verifyEmail,
     resendOTP,
-    login,
     forgotPassword,
     resetPassword,
     logout

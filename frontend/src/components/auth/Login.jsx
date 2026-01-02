@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, Leaf, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../services/api';
 import { validateEmail, validatePassword, LoginSchema } from '../../utils/validation';
 import * as Yup from 'yup';
+import { useMutation } from '@tanstack/react-query';
 
 
 const Login = () => {
-  const { login } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -16,7 +16,7 @@ const Login = () => {
     rememberMe: false
   });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  
   const [isFormReady, setIsFormReady] = useState(false);
 
   useEffect(() => {
@@ -39,6 +39,54 @@ const Login = () => {
     }
   };
 
+  const loginMutation = useMutation({
+    mutationFn: async (formData) =>{
+      await LoginSchema.validate(formData, { abortEarly: false });
+      const response = await authAPI.login({
+        email: formData.email.trim(),
+        password: formData.password
+      });
+      return response;
+    },
+    onSuccess: (data) => {
+      console.log("success",data);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      document.cookie = `token=${data.token}; path=/; max-age=604800`;
+      const role = data?.user?.role;
+      if(role === 'ngo'){
+        navigate('/ngo/dashboard');
+      }
+      else if(role === 'restaurant'){
+        navigate('/restaurant/dashboard');
+      }
+      else if(role === 'admin'){
+        navigate('/admin/dashboard');
+      }
+      else{
+        navigate('/');
+      }
+    },
+    onError: (error)=>{
+      console.error("login error ", error);
+      if(error.inner){
+        const newError = {};
+        error.inner.forEach((err)=>{
+          newError[err.path]=err.message;
+        })
+        setErrors(newError);
+      }
+      else if(error?.response?.data?.requiresVerification){
+        navigate('/verify-email',{state:{email:error.response.data.email, fromLogin:true}});
+      }
+      else{
+        setErrors({
+          submit: error.response?.data?.message || 'Invalid email or password' || error.message,
+        })
+      }
+    }
+  })
+
 
   
 
@@ -49,54 +97,8 @@ const Login = () => {
     if (!isFormReady) return;
 
     setErrors({});
-    setLoading(true);
     
-    
-
-    try {
-      await LoginSchema.validate(formData, { abortEarly: false });
-      const result = await login({email: formData.email.trim(), password: formData.password});
-
-      if (result.success) {
-        // ✅ Redirect based on user role
-        setLoading(true);
-        const user = result.user || JSON.parse(localStorage.getItem('user') || '{}');
-        const role = user.role;
-
-        if (role === 'ngo') {
-          navigate('/ngo/dashboard');
-        } else if (role === 'restaurant') {
-          navigate('/restaurant/dashboard');
-        } else if (role === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate('/');
-        }
-      } else {
-        // Check if user needs verification
-        if (result.requiresVerification && result.email) {
-          navigate('/verify-email', { state: { email: result.email } });
-        } else {
-          setErrors({ submit: result.message || 'Invalid email or password' });
-        }
-        setLoading(false);
-      }
-    } catch (error) {
-      if (error.inner) {
-        const newErrors = {};
-        error.inner.forEach((err) => {
-          newErrors[err.path] = err. message;
-        });
-        setErrors(newErrors);
-      } else {
-        // Handle API/network errors
-        console.error('Login error:', error);
-        setErrors({ 
-          submit: error.response?.data?.message || 'Unable to connect to server. Please try again.' 
-        });
-      }
-      setLoading(false);
-    }
+    loginMutation.mutate(formData);
   };
 
   return (
@@ -177,7 +179,7 @@ const Login = () => {
                 />
                 <button
                 type="button"
-                onClick={() => setShowPassword(! showPassword)}
+                onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                 >
                 {showPassword ? (

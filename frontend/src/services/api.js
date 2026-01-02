@@ -25,7 +25,7 @@ api.interceptors.request. use(
 );
 
 // Response interceptor - Handle errors globally
-api.interceptors.response. use(
+api.interceptors.response.use(
   (response) => response,
   (error) => {
     const isAuthEndpoint = error.config?.url?.includes('/auth/');
@@ -111,7 +111,7 @@ export const authAPI = {
           data: {
             success: false,
             message: error.response?. data?.message || 'Login failed',
-            requiresVerification: error.response?.data?. requiresVerification || false,
+            requiresVerification: error.response?.data?.requiresVerification || false,
             email: error.response?.data?.email || null
           }
         }

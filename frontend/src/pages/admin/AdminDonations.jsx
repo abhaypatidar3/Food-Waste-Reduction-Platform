@@ -175,7 +175,7 @@ const AdminDonations = () => {
                             </span>
                             {timeInfo.urgent && donation.status === 'Pending' && (
                               <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded">
-                                ⚠ Urgent
+                                Urgent
                               </span>
                             )}
                           </div>

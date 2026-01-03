@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Leaf, AlertCircle, CheckCircle, Mail, ArrowLeft } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../services/api';
+import { useMutation } from '@tanstack/react-query';
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { verifyEmail, resendOTP } = useAuth();
-  const email = location.state?. email;
+  const email = location.state?.email;
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
@@ -20,7 +19,7 @@ const VerifyEmail = () => {
 
   // Redirect if no email provided
   useEffect(() => {
-    if (!email) {
+    if (!email){
       navigate('/signup');
     }
   }, [email, navigate]);
@@ -59,7 +58,7 @@ const VerifyEmail = () => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').slice(0, 6);
     
-    if (!/^\d+$/. test(pastedData)) return;
+    if (!/^\d+$/.test(pastedData)) return;
 
     const newOtp = pastedData.split('');
     while (newOtp.length < 6) newOtp.push('');
@@ -68,65 +67,96 @@ const VerifyEmail = () => {
     inputRefs.current[Math. min(pastedData.length, 5)]?.focus();
   };
 
+   const verifyEmail = useMutation({
+    mutationFn: async ( {email, otpString} ) => {
+      const response = await authAPI.verifyEmail(email, otpString);
+      return response;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        setSuccess('Email verified successfully! Redirecting...');
+        setError('');
+        localStorage.setItem('token', data.token);
+        document.cookie = `token=${data.token}; path=/; max-age=${7 * 24 * 60 * 60}`;
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setTimeout(() => {
+          const role = data.user?.role;
+          if (role === 'restaurant') {
+            navigate('/restaurant/dashboard');
+          } else if (role === 'ngo') {
+            navigate('/ngo/dashboard');
+          } else if (role === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/login');
+          }
+        }, 2000);
+      } else{
+        setError(data.message || 'Verification failed');
+        setSuccess('');
+      }
+    },
+    onError: (error) => {
+      console.error('Verification error:', error);
+      setError('Invalid or expired OTP. Please try again.');
+      setSuccess('');
+    }
+  })
+
+  const resendMutation = useMutation({
+    mutationFn: async (email) => {
+      const response = await authAPI.resendOTP(email, 'email_verification');
+      return response;
+    },
+    onSuccess: (data) => {
+      console. log('OTP resent successfully:', data);
+      
+      if (data.success) {
+        setSuccess(data.message || 'OTP sent successfully!  Please check your email.');
+        setError('');
+        setResendCooldown(60); // 60 seconds cooldown
+        setOtp(['', '', '', '', '', '']);
+        inputRefs.current[0]?.focus();
+      } else {
+        setError(data.message || 'Failed to resend OTP');
+        setSuccess('');
+      }
+    },
+    onError: (error) => {
+      console.error('Resend OTP error:', error);
+      setError(
+        error.response?.data?.message || 
+        'Failed to resend OTP. Please try again.'
+      );
+      setSuccess('');
+    }
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const otpString = otp. join('');
+    const otpString = otp.join('');
     
     if (otpString.length !== 6) {
       setError('Please enter the complete 6-digit OTP');
       return;
     }
 
-    setLoading(true);
+    
     setError('');
-
-    try {
-      // Use AuthContext verifyEmail function
-      const result = await verifyEmail(email, otpString);
-
-      if (result.success) {
-        setSuccess('Email verified successfully! Redirecting.. .');
-        // AuthContext will handle the redirect automatically
-      } else {
-        setError(result.message || 'Verification failed');
-        setLoading(false);
-      }
-    } catch (error) {
-      console.error('Verification error:', error);
-      setError('Invalid or expired OTP.  Please try again.');
-      setLoading(false);
-    }
+    setSuccess('');
+    verifyMutation.mutate({ email, otpString });
   };
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;
 
-    setResendLoading(true);
     setError('');
     setSuccess('');
-
-    try {
-      // Use AuthContext resendOTP function
-      const result = await resendOTP(email, 'email_verification');
-      
-      if (result.success) {
-        setSuccess(result.message || 'OTP sent successfully! Please check your email.');
-        setResendCooldown(60); // 60 seconds cooldown
-        setOtp(['', '', '', '', '', '']);
-        inputRefs.current[0]?. focus();
-      } else {
-        setError(result.message || 'Failed to resend OTP');
-      }
-    } catch (error) {
-      console.error('Resend OTP error:', error);
-      setError('Failed to resend OTP. Please try again.');
-    } finally {
-      setResendLoading(false);
-    }
+    resendMutation.mutate(email);
   };
 
-  if (! email) return null;
+  if (!email) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center p-4">

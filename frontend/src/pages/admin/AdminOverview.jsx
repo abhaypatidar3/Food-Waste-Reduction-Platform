@@ -4,30 +4,27 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminAPI } from '../../services/adminService';
 import { Users, Package, TrendingUp, CheckCircle, Clock, XCircle } from 'lucide-react';
 import {useAdmin} from '../../context/AdminContext';
+import { useQuery } from '@tanstack/react-query';
 
 
 const AdminOverview = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
   const {filters, setFilters, status, setStatus} = useAdmin();
-  useEffect(() => {
-    fetchStats();
-  }, []);
 
-  const fetchStats = async () => {
-    setLoading(true);
-    try {
+  const { data:stats, isLoading:loading, isError, error } = useQuery({
+    queryKey: ['adminStats'],
+    queryFn: async ()=>{
       const response = await adminAPI.getStats();
       if(response.success) {
-        setStats(response.stats);
+        return response.stats;
       }
-    }catch (error) {
-      console.error('Error fetching stats:', error);
-    }finally {
-      setLoading(false);
-    }
-  };
+      throw new Error('failed to fetch admin stats');
+    },
+    staleTime: 2*60*1000,
+    retry: 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  })
 
   if (loading) {
     return (
@@ -35,7 +32,7 @@ const AdminOverview = () => {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading... </p>
+            <p className="text-gray-600">Loading...</p>
           </div>
         </div>
       </DashboardLayout>

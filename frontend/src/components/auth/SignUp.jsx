@@ -3,12 +3,10 @@ import { Link } from 'react-router-dom';
 import { authAPI } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Leaf, Upload, ChefHat, Heart, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
 import { registerSchema } from '../../utils/validation';
-import * as Yup from 'yup';
+import { useMutation } from '@tanstack/react-query';
 
 const Signup = () => {
-  const { register } = useAuth();
   const [userType, setUserType] = useState('restaurant');
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -22,7 +20,6 @@ const Signup = () => {
     agreeToTerms: false
   });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState('');
 
   const handleChange = (e) => {
@@ -64,53 +61,55 @@ const Signup = () => {
 
 
   const navigate = useNavigate();
+
+  const signUpMutation = useMutation({
+    mutationFn: async (formData)=>{
+        await registerSchema.validate(formData, { abortEarly: false });
+
+        const registrationData = {
+          email: formData.email. trim(),
+          password: formData.password,
+          role: userType,
+          organizationName: formData.organizationName.trim(),
+          phone: formData.phone.replace(/\D/g, ''),
+          address: formData.address.trim(),
+          certificateUrl: null
+        };
+
+        const response = await authAPI.register(registrationData);
+
+        return { ...response, email: registrationData.email.trim() };  // yup will handle extra spaces or tabs but this is for extra safety if user input extra spaces 
+    },
+    onSuccess:(data)=>{
+      console.log("success", data);
+
+      navigate('/verify-email', { state: { email: data.email, fromRegister:true }});
+
+    },
+    onError: (error)=>{
+      console.error("error occur in regitration", error);
+      if(error.inner){
+        const newError = {};
+        error.inner.forEach((err)=>{
+          newError[err.path]=err.message;
+        });
+        setErrors(newError);
+        window.scrollTo({ top: 0, behavior: 'smooth'});
+      }
+      else{
+        setErrors({
+          submit: error.response?.data?.message || 'Registration failed. try again later.' || error.message,
+        })
+        window.scrollTo({ top: 0, behavior: 'smooth'});
+      }
+    }
+  })
+
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    let result;
-    // setErrors({});
-    try {
-      result =await registerSchema.validate(formData, { abortEarly: false });
-      console.log('form submitted', formData);
-
-      setLoading(true);
-
-      const registrationData = {
-      email:  formData.email. trim(),
-      password: formData.password,
-      role: userType,
-      organizationName: formData.organizationName.trim(),
-      phone: formData.phone.replace(/\D/g, ''),
-      address: formData.address.trim(),
-      certificateUrl: null
-    };
-
-    const response = await authAPI.register(registrationData);
-
-    if (response.success) {
-      // Redirect to verification page
-      navigate('/verify-email', { state: { email: formData.email. trim() } });
-    } else {
-      setErrors({ submit: response.message || 'Registration failed.  Please try again.' });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    } catch (error) {
-      const newError = {};
-
-      error.inner.forEach((err)=>{
-        newError[err.path] = err.message; 
-      })
-      setErrors(newError);
-      if (!result) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-      return;
-    }
-
-  
-  
-  // setLoading(true);
+    setErrors({});
+    signUpMutation.mutate(formData);
   };
  
 
@@ -291,7 +290,7 @@ const Signup = () => {
                 } rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`}
               />
             </div>
-            {errors. address && (
+            {errors.address && (
               <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                 <AlertCircle size={14} />
                 {errors. address}
@@ -319,7 +318,7 @@ const Signup = () => {
                     errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-emerald-500'
                   } rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all`}
                 />
-                <button onClick={()=>setShowPassword(!showPassword)} className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none' >
+                <button type='button' onClick={()=>setShowPassword(!showPassword)} className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none' >
                     {
                       showPassword ? (
                         <EyeOff size={20}/>
@@ -399,7 +398,7 @@ const Signup = () => {
                 )}
               </label>
             </div>
-            {errors. certificate && (
+            {errors.certificate && (
               <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
                 <AlertCircle size={14} />
                 {errors. certificate}
@@ -442,10 +441,10 @@ const Signup = () => {
           {/* Create Account Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={signUpMutation.isPending}
             className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? (
+            {signUpMutation.isPending ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 Creating Account...

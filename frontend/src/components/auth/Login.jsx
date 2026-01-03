@@ -6,7 +6,6 @@ import { validateEmail, validatePassword, LoginSchema } from '../../utils/valida
 import * as Yup from 'yup';
 import { useMutation } from '@tanstack/react-query';
 
-
 const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -218,10 +217,10 @@ const Login = () => {
 
             <button
               type="submit"
-              disabled={loading || !isFormReady}
+              disabled={loginMutation.isPending || !isFormReady}
               className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? (
+              {loginMutation.isPending ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                   Signing in... 

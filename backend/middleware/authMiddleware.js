@@ -5,19 +5,22 @@ const User = require('../models/User');
 exports.protect = async (req, res, next) => {
   try {
     let token;
+    let tokenSource;
 
     // Check for token in headers or cookies
-    if (req.headers.authorization && req.headers.authorization. startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    } else if (req.cookies.token) {
+    if (req.cookies && req.cookies.token) {
       token = req.cookies.token;
+      tokenSource = 'cookie';
+    } else if ( req.headers.authorization && req.headers.authorization.startsWith('Bearer')){
+      token = req.headers.authorization. split(' ')[1];
+      tokenSource = 'header';
     }
 
     // Check if token exists
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Not authorized to access this route.  Please login.'
+        message: 'Not authorized to access this route. Please login.'
       });
     }
 
@@ -25,7 +28,7 @@ exports.protect = async (req, res, next) => {
     if (token === 'none' || token. length < 10) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid token.  Please login again.'
+        message: 'Invalid token. Please login again.'
       });
     }
 
@@ -44,7 +47,7 @@ exports.protect = async (req, res, next) => {
       }
 
       // Check if user is active
-      if (!req.user. isActive) {
+      if (!req.user.isActive) {
         return res.status(403).json({
           success: false,
           message: 'Your account has been deactivated. Please contact support.'

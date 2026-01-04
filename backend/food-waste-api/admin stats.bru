@@ -1,0 +1,23 @@
+meta {
+  name: admin stats
+  type: http
+  seq: 6
+}
+
+post {
+  url: https://food-waste-reduction-backend.onrender.com/api/auth/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email":"patidarabhay1996@gmail.com",
+    "password":"@Abhay9784"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

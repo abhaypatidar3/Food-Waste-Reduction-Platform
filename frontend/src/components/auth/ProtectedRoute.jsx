@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
       return <Navigate to="/ngo/dashboard" replace />;
     } else if (user.role === 'restaurant') {
       return <Navigate to="/restaurant/dashboard" replace />;
-    } else if (user. role === 'admin') {
+    } else if (user.role === 'admin') {
       return <Navigate to="/admin/dashboard" replace />;
     } else {
       return <Navigate to="/login" replace />;

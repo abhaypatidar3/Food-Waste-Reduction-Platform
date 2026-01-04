@@ -53,18 +53,20 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(data.user));
       document.cookie = `token=${data.token}; path=/; max-age=604800`;
       const role = data?.user?.role;
-      if(role === 'ngo'){
+      setTimeout(()=>{
+        if(role === 'ngo'){
         navigate('/ngo/dashboard');
-      }
-      else if(role === 'restaurant'){
-        navigate('/restaurant/dashboard');
-      }
-      else if(role === 'admin'){
-        navigate('/admin/dashboard');
-      }
-      else{
-        navigate('/');
-      }
+        }
+        else if(role === 'restaurant'){
+          navigate('/restaurant/dashboard');
+        }
+        else if(role === 'admin'){
+          navigate('/admin/dashboard');
+        }
+        else{
+          navigate('/');
+        }
+      },100)
     },
     onError: (error)=>{
       console.error("login error ", error);

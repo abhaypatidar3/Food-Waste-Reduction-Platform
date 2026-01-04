@@ -135,10 +135,10 @@ function App(){
 
         <Route path="*" element={<Navigate to="/login" replace />} />
 
+        <Route path="/verify-email" element={<VerifyEmail />} />
         
       </Routes>
 
-      <Routes path="/verify-email" element={<VerifyEmail />} />
 
     </div>
   );

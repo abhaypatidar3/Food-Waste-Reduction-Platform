@@ -10,9 +10,9 @@ const api = axios.create({
 });
 
 // Request interceptor - Add token to requests
-api.interceptors.request. use(
+api.interceptors.request.use(
   (config) => {
-    const token = localStorage. getItem('token');
+    const token = localStorage.getItem('token');
     // Only add token if it exists and is not 'none'
     if (token && token !== 'none' && token. length > 10) {
       config.headers. Authorization = `Bearer ${token}`;

@@ -72,7 +72,7 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    console.log('✅ User created (unverified):', user._id);
+    console.log('User created (unverified):', user._id);
 
     // Generate and send OTP
     const otp = await saveOTP(email, 'email_verification');
@@ -312,7 +312,7 @@ exports.login = async (req, res, next) => {
     sendTokenResponse(fullUser, 200, res);
 
   } catch (error) {
-    console.error(' Login error:', error);
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error during login'
@@ -447,7 +447,8 @@ exports.logout = async (req, res) => {
       expires: new Date(Date.now()),
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      sameSite: 'strict',
+      path: '/'
     });
 
     res.status(200).json({

@@ -1,9 +1,31 @@
+import { useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const [user, setUser] = useState(null);
   const location = useLocation();
+  const [loading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+    // Check localStorage for user
+    try {
+      const token = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+
+      if (token && savedUser && token !== 'none') {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+      }
+    } catch (error) {
+      console.error('❌ Error loading user:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // Show loading while checking authentication
   if (loading) {
@@ -18,7 +40,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   // Not authenticated - redirect to login
-  if (!isAuthenticated || ! user) {
+  if (!user) {
     return <Navigate to="/login" state={{ from:  location }} replace />;
   }
 

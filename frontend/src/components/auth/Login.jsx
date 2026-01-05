@@ -49,9 +49,16 @@ const Login = () => {
     },
     onSuccess: (data) => {
       console.log("success",data);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      document.cookie = `token=${data.token}; path=/; max-age=604800`;
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+      if (data.token) {
+        document.cookie = `token=${data.token}; path=/; max-age=604800`;
+      }
+      
       const role = data?.user?.role;
       setTimeout(()=>{
         if(role === 'ngo'){

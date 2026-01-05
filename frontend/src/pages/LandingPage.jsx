@@ -68,7 +68,7 @@ const LandingPage = () => {
           <div className='flex md:pl-[10vw] gap-3 text-left justify-center md:justify-normal'>
             <TrendingUp className='w-[50px] h-[50px] mt-1 text-[#1E7F5C]' />
             <div>
-              <p className='text-4xl'>{analytics?.totalfoodServed || 0}</p>
+              <p className='text-4xl'>{analytics?.totalfoodServed || 0} kg</p>
               <p className='text-slate-600'>Food Waste Prevented</p>
             </div>
           </div>

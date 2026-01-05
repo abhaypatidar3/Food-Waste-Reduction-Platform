@@ -38,7 +38,6 @@ function App(){
         <Route path='/ngo/notifications' element={<Notifications />} />
         <Route path='/ngo/acceptances' element={<MyAcceptances />} />
 
-        <Route path='/restaurant/dashboard' element={<RestaurantOverview/>} />
         <Route
               path="/restaurant/dashboard"
               element={
@@ -135,7 +134,6 @@ function App(){
 
         <Route path="*" element={<Navigate to="/login" replace />} />
 
-        <Route path="/verify-email" element={<VerifyEmail />} />
         
       </Routes>
 

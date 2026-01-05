@@ -48,32 +48,36 @@ const Login = () => {
       return response;
     },
     onSuccess: (data) => {
-      console.log("success",data);
+      console.log('✅ Login successful:', data);
       if (data.token) {
-        localStorage.setItem('token', data.token);
+        localStorage.setItem('token', data. token);
+        sessionStorage.setItem('token', data.token);
       }
+
       if (data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user));
+        const userJson = JSON.stringify(data.user);
+        localStorage.setItem('user', userJson);
+        sessionStorage.setItem('user', userJson);
       }
+
+      // Set cookie
       if (data.token) {
         document.cookie = `token=${data.token}; path=/; max-age=604800`;
       }
+
+      const role = data?.user?. role;
+        
+      // Set a flag that login just happened
+      sessionStorage.setItem('justLoggedIn', 'true');
+        
+      // Hard redirect
+      const paths = {
+        admin: '/admin/dashboard',
+        restaurant: '/restaurant/dashboard',
+        ngo: '/ngo/dashboard'
+      };
       
-      const role = data?.user?.role;
-      setTimeout(()=>{
-        if(role === 'ngo'){
-        navigate('/ngo/dashboard');
-        }
-        else if(role === 'restaurant'){
-          navigate('/restaurant/dashboard');
-        }
-        else if(role === 'admin'){
-          navigate('/admin/dashboard');
-        }
-        else{
-          navigate('/');
-        }
-      },100)
+      window.location.href = paths[role] || '/';
     },
     onError: (error)=>{
       console.error("login error ", error);

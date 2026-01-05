@@ -67,7 +67,7 @@ const VerifyEmail = () => {
     inputRefs.current[Math. min(pastedData.length, 5)]?.focus();
   };
 
-   const verifyEmail = useMutation({
+   const verifyMutation = useMutation({
     mutationFn: async ( {email, otpString} ) => {
       const response = await authAPI.verifyEmail(email, otpString);
       return response;
@@ -157,7 +157,7 @@ const VerifyEmail = () => {
   };
 
   if (!email) return null;
-
+  const isVerified = success && success.includes('verified successfully');
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center p-4">
       {/* Back Button */}
@@ -220,10 +220,10 @@ const VerifyEmail = () => {
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={index === 0 ? handlePaste : undefined}
-                  disabled={loading || success}
+                  disabled={isVerified || verifyMutation.isPending}
                   className={`w-12 h-14 text-center text-2xl font-bold border-2 rounded-lg focus:ring-2 focus: ring-emerald-500 focus:border-transparent outline-none transition-all ${
                     error ?  'border-red-500' : 'border-gray-300'
-                  } ${(loading || success) ? 'bg-gray-50 cursor-not-allowed' :  ''}`}
+                  } ${(isVerified|| verifyMutation.isPending) ? 'bg-gray-50 cursor-not-allowed' :  ''}`}
                 />
               ))}
             </div>
@@ -232,10 +232,10 @@ const VerifyEmail = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading || success}
+            disabled={isVerified || verifyMutation.isPending}
             className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? (
+            {verifyMutation.isPending ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 Verifying...
@@ -243,7 +243,7 @@ const VerifyEmail = () => {
             ) : success ? (
               <>
                 <CheckCircle size={20} />
-                Verified! 
+                Verify
               </>
             ) : (
               'Verify Email'
@@ -256,10 +256,10 @@ const VerifyEmail = () => {
             <button
               type="button"
               onClick={handleResend}
-              disabled={resendLoading || resendCooldown > 0 || success}
+              disabled={resendMutation.isPending || resendCooldown > 0 || success}
               className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {resendLoading ?  (
+              {resendMutation.isPending ?  (
                 <span className="flex items-center justify-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
                   Sending...

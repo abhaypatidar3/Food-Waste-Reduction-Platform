@@ -1,5 +1,48 @@
 const mongoose = require('mongoose');
 const User = require('./User');
+const Yup = require('yup');
+
+const restaurantYupSchema = Yup.object().shape({
+  organizationName:  Yup.string()
+    .required('Organization name is required')
+    .trim()
+    .min(3, 'Org name must be at least 3 characters'),
+
+  phone: Yup.string()
+    .required('Phone number is required')
+    .matches(/^\d{10}$/, 'provide valid 10-digit phone number'),
+
+  address: Yup. mixed()
+    .required('Address is required'),
+
+  location: Yup.string().optional(),
+
+  operatingHours:  Yup.string()
+    .trim()
+    .optional(),
+
+  description: Yup.string()
+    .trim()
+    .max(500, 'Description must not exceed 500 characters')
+    .optional(),
+
+  certificateUrl: Yup.string()
+    .url('Invalid certificate URL format')
+    .nullable()
+    .optional(),
+
+  totalDonations: Yup.number()
+    .integer('Total donations must be an integer')
+    .min(0, 'Total donations cannot be negative')
+    .default(0),
+
+  mealsProvided: Yup.number()
+    .integer('Meals provided must be an integer')
+    .min(0, 'Meals provided cannot be negative')
+    .default(0)
+});
+
+
 
 const restaurantSchema = new mongoose.Schema({
   organizationName: {
@@ -55,9 +98,52 @@ const restaurantSchema = new mongoose.Schema({
   }
 });
 
-// Create geospatial index
-restaurantSchema.index({ location: '2dsphere' });
+restaurantSchema.pre('save', async function(next) {
+  // Only validate on new documents
+  if (this.isNew) {
+    try {
+      const dataToValidate = {
+        organizationName: this.organizationName,
+        phone: this. phone,
+        address: this. address,
+        location: this. location,
+        operatingHours: this.operatingHours,
+        description: this.description,
+        certificateUrl: this. certificateUrl,
+        totalDonations: this.totalDonations,
+        mealsProvided: this.mealsProvided
+      };
+
+      // Validate with Yup
+      await restaurantYupSchema.validate(dataToValidate, { abortEarly: false });
+      
+      next();
+    } catch (error) {
+      if (error.name === 'ValidationError') {
+        // Transform Yup errors to Mongoose format
+        const mongooseError = new Error('Validation failed');
+        mongooseError.name = 'ValidationError';
+        mongooseError.errors = {};
+        
+        error.inner.forEach(err => {
+          mongooseError.errors[err.path] = {
+            message: err. message,
+            path: err. path,
+            value: err. value
+          };
+        });
+        
+        return next(mongooseError);
+      }
+      return next(error);
+    }
+  } else {
+    next();
+  }
+});
 
 const Restaurant = User.discriminator('restaurant', restaurantSchema);
 
+
 module.exports = Restaurant;
+module.exports.restaurantYupSchema = restaurantYupSchema;

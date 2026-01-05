@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, Leaf, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { authAPI } from '../../services/api';
-import { validateEmail, validatePassword, LoginSchema } from '../../utils/validation';
-import * as Yup from 'yup';
+import { LoginSchema } from '../../utils/validation';
 import { useMutation } from '@tanstack/react-query';
 
 const Login = () => {
@@ -66,17 +65,17 @@ const Login = () => {
       }
 
       const role = data?.user?. role;
-        
+
       // Set a flag that login just happened
       sessionStorage.setItem('justLoggedIn', 'true');
-        
+
       // Hard redirect
       const paths = {
         admin: '/admin/dashboard',
         restaurant: '/restaurant/dashboard',
         ngo: '/ngo/dashboard'
       };
-      
+
       window.location.href = paths[role] || '/';
     },
     onError: (error)=>{

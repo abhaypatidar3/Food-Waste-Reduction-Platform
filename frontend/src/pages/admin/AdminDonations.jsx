@@ -152,7 +152,7 @@ const AdminDonations = () => {
             </div>
           ) : (
             donations.map((donation) => {
-              const timeInfo = getTimeRemaining(donation. expiryTime);
+              const timeInfo = getTimeRemaining(donation.expiryTime);
               
               return (
                 <div
@@ -287,7 +287,7 @@ const AdminDonations = () => {
         </div>
 
         {/* Pagination */}
-        {pagination. totalPages > 1 && (
+        {pagination.totalPages > 1 && (
           <div className="mt-6 bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
             <p className="text-sm text-gray-600">
               Showing {donations.length} of {pagination.totalDonations} donations

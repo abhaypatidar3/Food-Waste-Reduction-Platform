@@ -5,7 +5,7 @@ import { getNearbyDonations, acceptDonation } from '../../services/donationServi
 const NearbyDonations = () => {
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
+  const [viewMode, setViewMode] = useState('list'); 
   const [filters, setFilters] = useState({
     distance: '5',
     foodType: 'all',
@@ -220,7 +220,7 @@ const NearbyDonations = () => {
                           <h3 className="text-xl font-bold text-gray-800">{donation.foodName}</h3>
                           {isUrgent && (
                             <span className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full">
-                              ⚠ Urgent
+                               Urgent
                             </span>
                           )}
                         </div>
@@ -283,16 +283,7 @@ const NearbyDonations = () => {
           // Map View
           <div className="bg-white rounded-xl p-12 shadow-sm border border-gray-100">
             <div className="flex flex-col items-center justify-center py-20">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <span className="text-4xl text-gray-400">📍</span>
-              </div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">Interactive Map View</h3>
-              <p className="text-gray-600 text-center max-w-md">
-                Pins showing donation locations with distance indicators
-              </p>
-              <p className="text-sm text-gray-500 mt-4">
-                Map integration coming soon (Google Maps / Leaflet)
-              </p>
             </div>
           </div>
         )}

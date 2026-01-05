@@ -1,5 +1,24 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const Yup = require('yup');
+
+
+const userYupSchema = Yup.object().shape({
+  email: Yup.string().required('Email is required').email('Invalid email format').matches(/^[a-zA-Z][a-zA-Z0-9._-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Email must start with a letter').trim().lowercase(),
+  password: Yup.string().required('Password is required').min(6, 'Password must be at least 6 characters')
+    .matches(/[A-Z]/, 'Password must contain at least one uppercase letter').matches(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .matches(
+      /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
+      'Password must contain at least one special character'
+  ),
+  role: Yup.string().oneOf(['restaurant', 'ngo', 'admin'], 'Invalid role').required('User role is required'),
+  isVerified: Yup.boolean().default(false),
+
+  isActive: Yup.boolean().default(true)
+  
+})
+
+
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -53,19 +72,68 @@ const userSchema = new mongoose.Schema({
   collection: 'users'
 });
 
-// Hash password before saving
+
 userSchema.pre('save', async function(next) {
-  if (this.password && this.isModified('password')) {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+  // Only validate on new documents or when password is modified
+  if (this.isNew || this.isModified('password')) {
+    try {
+      const dataToValidate = {
+        email: this.email,
+        role: this.role,
+        isVerified: this.isVerified,
+        isActive:  this.isActive
+      };
+
+      // Only validate password if it's being set/modified and not already hashed
+      if (this.isModified('password') && this.password) {
+        // Check already hashed or not
+        if (!this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
+          dataToValidate.password = this. password;
+        }
+      }
+
+      // Validate with Yup
+      await userYupSchema.validate(dataToValidate, { abortEarly: false });
+    } catch (error) {
+      if (error.name === 'ValidationError') {
+        // Transform Yup errors to Mongoose format
+        const mongooseError = new Error('Validation failed');
+        mongooseError.name = 'ValidationError';
+        mongooseError.errors = {};
+        
+        error.inner.forEach(err => {
+          mongooseError.errors[err.path] = {
+            message: err.message,
+            path: err.path,
+            value: err.value
+          };
+        });
+        
+        return next(mongooseError);
+      }
+      return next(error);
+    }
   }
+
+  // Hash password before saving
+  if (this.password && this.isModified('password')) {
+    // Only hash if not already hashed
+    if (!this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+    }
+  }
+
+  next();
 });
 
 // Compare entered password with hashed password
-userSchema.methods. matchPassword = async function(enteredPassword) {
+userSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 const User = mongoose.model('User', userSchema);
 
+// ✅ Export both the model and validation schema
 module.exports = User;
+module.exports.userYupSchema = userYupSchema;

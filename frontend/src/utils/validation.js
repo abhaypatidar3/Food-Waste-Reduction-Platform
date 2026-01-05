@@ -17,6 +17,8 @@ export const LoginSchema = Yup.object().shape({
     password: Yup.string().required('Password is required').min(6,'Password must be at least 6 characters')
 })
 
+
+
 export const validateEmail = (email) => {
   if (!email || ! email.trim()) {
     return { isValid: false, error: 'Email is required' };

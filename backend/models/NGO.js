@@ -1,5 +1,23 @@
 const mongoose = require('mongoose');
 const User = require('./User');
+const Yup = require('yup');
+
+const ngoYupSchema = Yup.object().shape({
+  organizationName: Yup.string().required('Organization name is required').trim().min(3, 'Org name must be at least 3 characters'),
+
+  phone: Yup.string().required('Phone number is required').matches(/^\d{10}$/, 'provide valid 10-digit phone number'),
+  address: Yup.object().shape({
+    street: Yup.string().required('Street is required').trim(),
+    city: Yup.string().required('City is required').trim(),
+    state: Yup.string().required('State is required').trim(),
+    zipCode: Yup.string().required('Zip code is required').trim()
+  }),
+  location: Yup.string().optional(),
+  certificateUrl: Yup.string().url('Invalid certificate URL format').nullable().optional(),
+  totalReceived: Yup.number().integer('Total received must be an integer').min(0, 'Total received cannot be negative').default(0),
+  mealsReceived: Yup.number().integer('Meals received must be an integer').min(0, 'Meals received cannot be negative').default(0)
+})
+
 
 const ngoSchema = new mongoose.Schema({
   organizationName: {
@@ -12,11 +30,6 @@ const ngoSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Phone number is required'],
     match: [/^\d{10}$/, 'Please provide a valid 10-digit phone number']
-  },
-  address: {
-    type: String,
-    required: [true, 'Address is required'],
-    trim: true
   },
   location: {
     type: {
@@ -65,9 +78,50 @@ const ngoSchema = new mongoose.Schema({
   }
 });
 
-// Create geospatial index
-ngoSchema.index({ location: '2dsphere' });
+ngoSchema.pre('save', async function(next){
+  if(this.isNew){
+    try{
+      const dataToValidate = {
+        organizationName: this.organizationName,
+        phone: this.phone,
+        address: {
+          street: this.address.street,
+          city: this.address.city,
+          state: this.address.state,
+          zipCode: this.address.zipCode
+        },
+        location: this.location,
+        certificateUrl: this.certificateUrl,
+        totalReceived: this.totalReceived,
+        mealsReceived: this.mealsReceived
+      };
+      await ngoYupSchema.validate(dataToValidate, {abortEarly: false});
+      next();
+    } catch(error){
+      if(error.name === 'validationError'){
+        const mongooseError = new Error('Validation failed');
+        mongooseError.name = 'validationError';
+        mongooseError.errors = {};
+
+        error.inner.forEach(err=>{
+          mongooseError.errors[err.path] = {
+            message: err.message,
+            path: err.path,
+            value: err.value
+          };
+        });
+        return next(mongooseError);
+      }
+      return next(error);
+    }
+  } else{
+    next();
+  }
+})
+
 
 const NGO = User. discriminator('ngo', ngoSchema);
 
 module.exports = NGO;
+
+module.exports.ngoYupSchema = ngoYupSchema;

@@ -6,12 +6,11 @@ import {
 } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import api from '../../services/api';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 const RestaurantProfile = () => {
-  const [user, setUser] = useState(null);
+  const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   
   const [formData, setFormData] = useState({
@@ -28,41 +27,62 @@ const RestaurantProfile = () => {
     operatingHours: ''
   });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
 
-  const fetchProfile = async () => {
-    setLoading(true);
-    try {
+  const {data : user , isLoading, isError, refetch} = useQuery({
+    queryKey: ['RestaurantProfileData'],
+    queryFn: async ()=>{
       const response = await authAPI.getMe();
       if (response.success) {
-        setUser(response.user);
         setFormData({
-          organizationName: response. user.organizationName || '',
-          email:  response.user.email || '',
+          organizationName: response.user.organizationName || '',
+          email: response.user.email || '',
           phone: response.user.phone || '',
           address: {
             street: response.user.address?.street || '',
-            city: response.user.address?.city || '',
+            city: response.user.address?. city || '',
             state: response.user.address?.state || '',
             zipCode: response.user.address?.zipCode || ''
           },
-          description: response.user. description || '',
-          operatingHours: response.user.operatingHours || ''
+          description: response. user.description || '',
+          operatingHours: response.user. operatingHours || ''
         });
+        return response.user;
       }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setMessage({ type: 'error', text: 'Failed to load profile' });
-    } finally {
-      setLoading(false);
+      throw new Error('Failed to fetch profile');
+    },
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (profileData) => {
+      const response = await api.put('/auth/profile', profileData);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        queryClient.setQueryData(['restaurantProfile'], data.user);
+        
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        setEditMode(false);
+        setMessage({ type: 'success', text: 'Profile updated successfully!' });
+        
+        setTimeout(() => setMessage({ type:  '', text: '' }), 3000);
+      }
+    },
+    onError: (error) => {
+      console.error('Error updating profile:', error);
+      setMessage({ 
+        type: 'error', 
+        text:  error.response?.data?.message || 'Failed to update profile' 
+      });
     }
-  };
+  });
+
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name. includes('.')) {
+    if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData(prev => ({
         ...prev,
@@ -77,36 +97,31 @@ const RestaurantProfile = () => {
   };
 
   const handleSave = async () => {
-    setSaving(true);
     setMessage({ type: '', text: '' });
-    
-    try {
-      const response = await api.put('/auth/profile', formData);
-      if (response.data.success) {
-        setUser(response.data.user);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        setEditMode(false);
-        setMessage({ type: 'success', text:  'Profile updated successfully!' });
-        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-      }
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.message || 'Failed to update profile' 
-      });
-    } finally {
-      setSaving(false);
-    }
+    updateProfileMutation.mutate(formData);
   };
 
   const handleCancel = () => {
     setEditMode(false);
-    fetchProfile(); // Reset form data
     setMessage({ type: '', text:  '' });
+    if (user) {
+      setFormData({
+        organizationName:  user.organizationName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        address: {
+          street: user.address?.street || '',
+          city: user.address?.city || '',
+          state: user.address?.state || '',
+          zipCode: user.address?. zipCode || ''
+        },
+        description: user.description || '',
+        operatingHours: user.operatingHours || ''
+      });
+    }
   };
 
-  if (loading) {
+  if(isLoading) {
     return (
       <DashboardLayout role="restaurant">
         <div className="flex items-center justify-center min-h-screen">
@@ -148,11 +163,11 @@ const RestaurantProfile = () => {
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving}
+                disabled={updateProfileMutation.isPending}
                 className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
               >
                 <Save size={18} />
-                <span>{saving ? 'Saving...' : 'Save'}</span>
+                <span>{updateProfileMutation.isPending ? 'Saving...' : 'Save'}</span>
               </button>
             </div>
           )}

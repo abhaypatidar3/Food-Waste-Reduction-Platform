@@ -1,48 +1,51 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { Package, Heart, Clock, TrendingUp } from 'lucide-react';
 import { getDonationStats, getMyDonations } from '../../services/donationService';
+import { useQuery } from '@tanstack/react-query';
 
 const RestaurantOverview = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
+
+
+  const {data, isLoading, isError} = useQuery({
+    queryKey: ['RestaurantOverviewData'],
+    queryFn: async ()=>{
+      const [statsRes, donationsRes] = await Promise.all([
+        getDonationStats(),
+        getMyDonations()
+      ]);
+       return {
+        stats: statsRes.success ? statsRes.data : {
+          totalDonations: 0,
+          totalDonationsChange: 0,
+          activeDonations: 0,
+          completedDonations: 0,
+          mealsSaved: 0,
+          mealsSavedChange: 0,
+          foodSavedKg: 0,
+          foodSavedChange: 0
+        },
+        recentActivity: donationsRes.success ? donationsRes.data. slice(0, 3) : []
+      };
+    },
+    staleTime: 60*1000, // 1 minute tk data fresh rhega
+    retry: 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  })
+
+  const stats = data?.stats || {
     totalDonations: 0,
     totalDonationsChange: 0,
     activeDonations: 0,
     completedDonations: 0,
-    mealsSaved:  0,
+    mealsSaved: 0,
     mealsSavedChange: 0,
-    foodSavedKg:  0,
+    foodSavedKg: 0,
     foodSavedChange: 0
-  });
-  const [recentActivity, setRecentActivity] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // Fetch stats
-      const statsRes = await getDonationStats();
-      if (statsRes.success) {
-        setStats(statsRes.data);
-      }
-
-      // Fetch recent donations (last 3)
-      const donationsRes = await getMyDonations();
-      if (donationsRes.success) {
-        setRecentActivity(donationsRes. data. slice(0, 3));
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
   };
+  const recentActivity = data?.recentActivity || [];
 
   const getStatusBadge = (status) => {
     const styles = {
@@ -78,7 +81,7 @@ const RestaurantOverview = () => {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  if (loading) {
+  if (isLoading) {
     return (
       <DashboardLayout role="restaurant">
         <div className="flex items-center justify-center min-h-screen">

@@ -3,32 +3,86 @@ import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getNotifications, markAsRead, markAllAsRead } from '../../services/notificationService';
 import { Bell, CheckCircle, AlertCircle, Info, Package } from 'lucide-react';
+import {  useQuery, useMutation, useQueryClient  } from '@tanstack/react-query';
 
 const RestaurantNotifications = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'unread'
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const notifications = [];
+  const unreadCount = 0;
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchNotifications();
   }, []);
 
-  const fetchNotifications = async () => {
-    setLoading(true);
-    try {
+  const {data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['RestaurantNotifications'],
+    queryFn: async ()=>{
       const response = await getNotifications();
       if (response.success) {
-        setNotifications(response.notifications);
-        setUnreadCount(response.unreadCount);
+        return {
+          notifications: response.notifications,
+          unreadCount: response. unreadCount
+        };
       }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setLoading(false);
+      throw new Error('Failed to fetch notifications');
+    },
+    staleTime: 60*1000,
+    retry: 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
+
+   notifications = data?.notifications || [];
+   unreadCount = data?.unreadCount || 0;
+
+  const markAsReadMutation = useMutation({
+    mutationFn:  async (notificationId) => {
+      return await markAsRead(notificationId);
+    },
+    onSuccess: (_, notificationId) => {
+      // Optimistically update the cache
+      queryClient.setQueryData(['restaurantNotifications'], (old) => {
+        if (! old) return old;
+        
+        return {
+          notifications: old.notifications.map(n =>
+            n._id === notificationId ? { ...n, read: true } : n
+          ),
+          unreadCount: Math.max(0, old.unreadCount - 1)
+        };
+      });
+    },
+    onError: (error) => {
+      console.error('Error marking as read:', error);
+      // Refetch to ensure consistency
+      refetch();
     }
-  };
+  });
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      return await markAllAsRead();
+    },
+    onSuccess: () => {
+      // Optimistically update the cache
+      queryClient.setQueryData(['restaurantNotifications'], (old) => {
+        if (!old) return old;
+        
+        return {
+          notifications: old.notifications.map(n => ({ ...n, read: true })),
+          unreadCount: 0
+        };
+      });
+    },
+    onError: (error) => {
+      console.error('Error marking all as read:', error);
+      // Refetch to ensure consistency
+      refetch();
+    }
+  });
 
   const handleNotificationClick = async (notification) => {
     // Mark as read

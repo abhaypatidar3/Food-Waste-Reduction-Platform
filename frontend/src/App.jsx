@@ -20,7 +20,6 @@ import RestaurantNotifications from './pages/restaurant/RestaurantNotifications'
 import RestaurantProfile from './pages/restaurant/RestaurantProfile';
 import NGOProfile from './pages/ngo/NGOProfile';
 import AdminReports from './pages/admin/AdminReports';
-
 function App(){
   return (
     <div>

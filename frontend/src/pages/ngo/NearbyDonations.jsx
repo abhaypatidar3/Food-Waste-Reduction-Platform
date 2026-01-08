@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getNearbyDonations, acceptDonation } from '../../services/donationService';
-
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+apply
 const NearbyDonations = () => {
-  const [donations, setDonations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState('list'); 
   const [filters, setFilters] = useState({
     distance: '5',
@@ -13,21 +13,36 @@ const NearbyDonations = () => {
   });
   const [acceptingId, setAcceptingId] = useState(null);
 
-  useEffect(() => {
-    fetchDonations();
-  }, []);
+  const {data, isLoading: loading, refetch} = useQuery({
+    queryKey: ['nearbyDonations', filters],
+    queryFn: async () =>{
+      const response = await getNearbyDonations({ status: 'Pending', ...filters });
+      return response.data || [];
+    },
+    staleTime: 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry:2
+  });
 
-  const fetchDonations = async () => {
-    setLoading(true);
-    try {
-      const response = await getNearbyDonations({ status: 'Pending' });
-      setDonations(response.data || []);
-    } catch (error) {
-      console.error('Error fetching donations:', error);
-    } finally {
-      setLoading(false);
+  const donations = data || [];
+
+  const acceptDonationMutation = useMutation({
+    mutationFn: async (donationId)=>{
+      return await acceptDonation(donationId);
+    },
+    onSuccess: ()=>{
+      alert('Donation accepted successfully!');
+      queryClient.setQueryData(['nearbyDonations', filters], (old) => {
+        if (!old) return old;
+        return old.filter(d => d._id !== donationId);
+      });
+      refetch();
+    },
+    onError: (error)=>{
+      alert(error.response?.data?.message || 'Failed to accept donation');
     }
-  };
+  })
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -35,24 +50,15 @@ const NearbyDonations = () => {
   };
 
   const applyFilters = () => {
-    // Apply filters logic here
     console.log('Applying filters:', filters);
     fetchDonations();
   };
 
-  const handleAccept = async (donationId) => {
-    if (! window.confirm('Do you want to accept this donation?')) return;
 
-    setAcceptingId(donationId);
-    try {
-      await acceptDonation(donationId);
-      alert('Donation accepted successfully!');
-      fetchDonations();
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to accept donation');
-    } finally {
-      setAcceptingId(null);
-    }
+
+  const handleAccept = async (donationId) => {
+    if (!window.confirm('Do you want to accept this donation?')) return;
+    acceptDonationMutation.mutate(donationId);
   };
 
   const getTimeRemaining = (expiryTime) => {
@@ -116,7 +122,7 @@ const NearbyDonations = () => {
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              🗺️ Map View
+               Map View
             </button>
           </div>
         </div>
@@ -178,16 +184,6 @@ const NearbyDonations = () => {
                 <option value="urgent">Urgent (Expiring soon)</option>
               </select>
             </div>
-
-            {/* Apply Button */}
-            <div className="flex items-end">
-              <button
-                onClick={applyFilters}
-                className="w-full px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Apply
-              </button>
-            </div>
           </div>
         </div>
 
@@ -229,10 +225,10 @@ const NearbyDonations = () => {
 
                       <button
                         onClick={() => handleAccept(donation._id)}
-                        disabled={acceptingId === donation._id}
+                        disabled={acceptDonationMutation.isPending}
                         className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                       >
-                        {acceptingId === donation._id ? 'Accepting...' : 'Accept Food'}
+                        {acceptDonationMutation.isPending ? 'Accepting...' : 'Accept Food'}
                       </button>
                     </div>
 

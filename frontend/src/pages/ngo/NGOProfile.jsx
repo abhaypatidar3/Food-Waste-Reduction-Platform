@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { 
   User, Mail, Phone, MapPin, Building, Users, Edit2, Save, X, 
@@ -6,14 +6,14 @@ import {
 } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import api from '../../services/api';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 const NGOProfile = () => {
-  const [user, setUser] = useState(null);
+  const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-  
+
   const [formData, setFormData] = useState({
     organizationName:  '',
     email: '',
@@ -30,16 +30,11 @@ const NGOProfile = () => {
     capacity: ''
   });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    setLoading(true);
-    try {
+  const { data: user, isLoading: loading, isError } = useQuery({
+    queryKey: ['ngoProfile'],
+    queryFn: async () => {
       const response = await authAPI.getMe();
       if (response.success) {
-        setUser(response.user);
         setFormData({
           organizationName: response.user.organizationName || '',
           email: response.user.email || '',
@@ -55,18 +50,46 @@ const NGOProfile = () => {
           servingArea: response.user.servingArea || '',
           capacity: response.user.capacity || ''
         });
+        return response.user;
       }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setMessage({ type: 'error', text: 'Failed to load profile' });
-    } finally {
-      setLoading(false);
+      throw new Error('Failed to fetch profile');
+    },
+    staleTime: 60*1000,
+    retry: 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false
+  });
+  
+  const updateProfileMutation = useMutation({
+    mutationFn: async (profileData) => {
+      const response = await api.put('/auth/profile', profileData);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        
+        queryClient.setQueryData(['ngoProfile'], data.user);
+        
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        setEditMode(false);
+        setMessage({ type: 'success', text: 'Profile updated successfully!' });
+        
+        setTimeout(() => setMessage({ type:   '', text: '' }), 3000);
+      }
+    },
+    onError: (error) => {
+      console.error('Error updating profile:', error);
+      setMessage({ 
+        type: 'error', 
+        text:   error.response?.data?.message || 'Failed to update profile' 
+      });
     }
-  };
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name. includes('.')) {
+    if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData(prev => ({
         ...prev,
@@ -81,33 +104,30 @@ const NGOProfile = () => {
   };
 
   const handleSave = async () => {
-    setSaving(true);
     setMessage({ type: '', text: '' });
-    
-    try {
-      const response = await api.put('/auth/profile', formData);
-      if (response.data.success) {
-        setUser(response.data.user);
-        localStorage.setItem('user', JSON. stringify(response.data.user));
-        setEditMode(false);
-        setMessage({ type: 'success', text: 'Profile updated successfully!' });
-        setTimeout(() => setMessage({ type:  '', text: '' }), 3000);
-      }
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      setMessage({ 
-        type: 'error', 
-        text: error.response?. data?.message || 'Failed to update profile' 
-      });
-    } finally {
-      setSaving(false);
-    }
+    updateProfileMutation.mutate(formData);
   };
 
   const handleCancel = () => {
     setEditMode(false);
-    fetchProfile(); // Reset form data
     setMessage({ type: '', text: '' });
+    if (user) {
+      setFormData({
+        organizationName:  user.organizationName || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        address: {
+          street: user.address?.street || '',
+          city: user.address?.city || '',
+          state: user.address?.state || '',
+          zipCode: user.address?. zipCode || ''
+        },
+        description: user.description || '',
+        registrationNumber: user. registrationNumber || '',
+        servingArea: user.servingArea || '',
+        capacity: user. capacity || ''
+      });
+    }
   };
 
   if (loading) {
@@ -145,6 +165,7 @@ const NGOProfile = () => {
             <div className="flex gap-3">
               <button
                 onClick={handleCancel}
+                disabled={updateProfileMutation.isPending}
                 className="flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
               >
                 <X size={18} />
@@ -152,11 +173,11 @@ const NGOProfile = () => {
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving}
+                disabled={updateProfileMutation.isPending}
                 className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
               >
                 <Save size={18} />
-                <span>{saving ? 'Saving...' : 'Save'}</span>
+                <span>{updateProfileMutation.isPending ? 'Saving...' : 'Save'}</span>
               </button>
             </div>
           )}
@@ -426,7 +447,7 @@ const NGOProfile = () => {
                         />
                       ) : (
                         <p className="px-4 py-3 bg-gray-50 rounded-lg text-gray-800">
-                          {user?.address?. zipCode || 'Not provided'}
+                          {user?.address?.zipCode || 'Not provided'}
                         </p>
                       )}
                     </div>

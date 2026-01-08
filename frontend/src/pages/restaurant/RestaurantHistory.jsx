@@ -2,66 +2,46 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getMyDonations } from '../../services/donationService';
 import { Calendar, TrendingUp, Award, Filter } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 const RestaurantHistory = () => {
-  const [donations, setDonations] = useState([]);
-  const [filteredDonations, setFilteredDonations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const donations = [];
   const [viewMode, setViewMode] = useState('timeline'); // 'timeline' or 'table'
   const [filters, setFilters] = useState({
     dateRange: 'last7days',
     status: 'all',
     ngo: 'all'
   });
-  const [stats, setStats] = useState({
-    thisMonth: 0,
-    totalImpact: 0,
-    successRate: 0
-  });
-  const [ngos, setNgos] = useState([]);
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [filters, donations]);
-
-  const fetchHistory = async () => {
-    setLoading(true);
-    try {
+  const {data, isLoading:loading, isError} = useQuery({
+    queryKey: ['RestaurantDonationHistory'],
+    queryFn: async ()=>{
       const response = await getMyDonations();
       if (response.success) {
-        const allDonations = response.data;
-        setDonations(allDonations);
-        
-        // Calculate stats
-        calculateStats(allDonations);
-        
-        // Extract unique NGOs
-        const uniqueNgos = [...new Set(allDonations
-          .filter(d => d. acceptedBy)
-          .map(d => d.acceptedBy. organizationName))];
-        setNgos(uniqueNgos);
+        return response.data;
       }
-    } catch (error) {
-      console.error('Error fetching history:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error('Failed to fetch donations');
+    },
+    staleTime: 2 * 60 * 1000,
+    retry: 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  })
+
+  donations = data || [];
+  stats = calculateStats(donations);
+  ngos = [...new Set(donations.filter(d => d.acceptedBy).map(d => d.acceptedBy.organizationName))];
+  const filteredDonations = applyFilters(donations, filters);
 
   const calculateStats = (donationsList) => {
     const now = new Date();
     const startOfMonth = new Date(now. getFullYear(), now.getMonth(), 1);
 
-    // This month completed
     const thisMonth = donationsList.filter(d => 
       d.status === 'Picked Up' && new Date(d.pickedUpAt) >= startOfMonth
     ).length;
 
-    // Total impact (food donated in kg)
+    
     let totalImpactKg = 0;
     donationsList.filter(d => d.status === 'Picked Up').forEach(donation => {
       const match = donation.quantity.match(/(\d+\.?\d*)/);
@@ -70,53 +50,49 @@ const RestaurantHistory = () => {
         if (donation.quantity.toLowerCase().includes('kg')) {
           totalImpactKg += num;
         } else if (donation.quantity.toLowerCase().includes('meal')) {
-          totalImpactKg += num * 0.3; // 0.3 kg per meal
+          totalImpactKg += num * 0.3; 
         } else {
-          totalImpactKg += num * 0.2; // 0.2 kg per item
+          totalImpactKg += num * 0.2; 
         }
       }
     });
 
-    // Success rate (completed / total created)
     const totalCreated = donationsList.length;
     const completed = donationsList.filter(d => d.status === 'Picked Up').length;
     const successRate = totalCreated > 0 ? Math.round((completed / totalCreated) * 100) : 0;
 
-    setStats({
+    return{
       thisMonth,
       totalImpact: Math.round(totalImpactKg),
       successRate
-    });
+    };
   };
 
-  const applyFilters = () => {
-    let filtered = [... donations];
+   function applyFilters(donationsList, filterOptions) {
+    let filtered = [... donationsList];
 
-    // Date range filter
     const now = new Date();
-    if (filters.dateRange === 'last7days') {
+    if (filterOptions.dateRange === 'last7days') {
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       filtered = filtered.filter(d => new Date(d.createdAt) >= sevenDaysAgo);
-    } else if (filters. dateRange === 'last30days') {
+    } else if (filterOptions.dateRange === 'last30days') {
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      filtered = filtered.filter(d => new Date(d. createdAt) >= thirtyDaysAgo);
-    } else if (filters.dateRange === 'thisMonth') {
+      filtered = filtered. filter(d => new Date(d.createdAt) >= thirtyDaysAgo);
+    } else if (filterOptions.dateRange === 'thisMonth') {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       filtered = filtered.filter(d => new Date(d.createdAt) >= startOfMonth);
     }
 
-    // Status filter
-    if (filters.status !== 'all') {
-      filtered = filtered. filter(d => d.status === filters.status);
+    if (filterOptions.status !== 'all') {
+      filtered = filtered.filter(d => d.status === filterOptions.status);
     }
 
-    // NGO filter
-    if (filters.ngo !== 'all') {
-      filtered = filtered.filter(d => d.acceptedBy?. organizationName === filters.ngo);
+    if (filterOptions.ngo !== 'all') {
+      filtered = filtered.filter(d => d.acceptedBy?.organizationName === filterOptions.ngo);
     }
 
-    setFilteredDonations(filtered);
-  };
+    return filtered;
+  }
 
   const getImpactText = (donation) => {
     const match = donation.quantity.match(/(\d+\.?\d*)/);

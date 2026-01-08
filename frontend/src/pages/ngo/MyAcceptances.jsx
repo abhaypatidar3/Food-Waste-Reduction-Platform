@@ -1,46 +1,52 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getAllDonations, markAsPickedUp } from '../../services/donationService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const MyAcceptances = () => {
-  const [donations, setDonations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'pending', 'completed'
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('all');
   const [confirmingId, setConfirmingId] = useState(null);
 
-  useEffect(() => {
-    fetchDonations();
-  }, []);
-
-  const fetchDonations = async () => {
-    setLoading(true);
-    try {
+  const {data, isLoading: loading, refetch} = useQuery({
+    queryKey: ['ngoMyAcceptances'],
+    queryFn: async ()=>{
       const response = await getAllDonations();
-      // Filter only accepted and picked up donations
-      const filtered = (response.data || []).filter(
-        d => d.status === 'Accepted' || d.status === 'Picked Up'
-      );
-      setDonations(filtered);
-    } catch (error) {
-      console.error('Error fetching donations:', error);
-    } finally {
-      setLoading(false);
+      return response;
+    },
+    staleTime: 60*1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus:false,
+    retry:2
+  });
+
+  const donations = (response?.data || []).filter(
+    d=>d.status === 'Accepted' || d.status === 'Picked Up'
+  );
+
+  const markAsPickedUpMutation = useMutation({
+    mutationFn: async (donationId) => {
+      return await markAsPickedUp(donationId);
+    },
+    onSuccess: (_,donationId)=>{
+      queryClient.setQueryData(['ngoMyAcceptances'], (old)=>{
+        if(!old) return old;
+        return old.map(d=>{
+          d._id === donationId 
+            ? { ...d, status: 'Picked Up', pickedUpAt: new Date().toISOString() }
+            : d;
+        });
+      });
+      refetch();
+    },
+    onError: (error)=>{
+      alert(error. response?.data?.message || 'Failed to update donation');
     }
-  };
+  })
 
   const handleConfirmPickup = async (donationId) => {
-    if (!window.confirm('Confirm that you have picked up this donation?')) return;
-
-    setConfirmingId(donationId);
-    try {
-      await markAsPickedUp(donationId);
-      alert('Donation marked as picked up! ');
-      fetchDonations();
-    } catch (error) {
-      alert(error.response?. data?.message || 'Failed to update donation');
-    } finally {
-      setConfirmingId(null);
-    }
+    if (!window.confirm('Confirm that you have picked up this donation? ')) return;
+    markAsPickedUpMutation.mutate(donationId);
   };
 
   const getFilteredDonations = () => {

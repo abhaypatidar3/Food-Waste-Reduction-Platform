@@ -2,67 +2,87 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getNotifications, markAsRead, markAllAsRead } from '../../services/notificationService';
+import { useQuery , useMutation, useQueryClient } from '@tanstack/react-query';
+
 
 const Notifications = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'unread'
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
-    setLoading(true);
-    try {
+  const {data, isLoading:loading, isError } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async ()=>{
       const response = await getNotifications();
-      if (response.success) {
-        setNotifications(response.notifications);
-        setUnreadCount(response.unreadCount);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setLoading(false);
+      return response;
+    },
+    staleTime: 60*1000,
+    refetchOnMount:true,
+    refetchOnWindowFocus:false,
+    retry:2
+  })
+
+  const notifications = data?.notification || [];
+  const unreadCount = data?.unreadCount || 0;
+
+  const markAsReadMutation = useMutation({
+    mutationFn: async (notificationId)=>{
+      return await markAsRead(notificationId);
+    },
+    onSuccess: (_,notificationId)=>{
+      queryClient.setQueryData(['notifications'], (old)=>{
+        if(!old){
+          return old;
+        }
+        return{
+          notifications: old.notifications.map(n =>
+            n._id === notificationId ? { ...n, read: true } : n
+          ),
+          unreadCount: Math.max(0, old.unreadCount - 1)
+        };
+      });
+    },
+    onError: (error)=>{
+      console.error('Error marking as read:', error);
+      refetch();
+    },
+  })
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      return await markAllAsRead();
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(['ngoNotifications'], (old) => {
+        if (!old) return old;
+        
+        return {
+          notifications: old. notifications.map(n => ({ ...n, read: true })),
+          unreadCount: 0
+        };
+      });
+    },
+    onError: (error) => {
+      console.error('Error marking all as read:', error);
+      refetch();
     }
-  };
+  });
 
   const handleNotificationClick = async (notification) => {
-    // Mark as read
+    // func for marking read
     if (! notification.read) {
-      try {
-        await markAsRead(notification._id);
-        setNotifications(prev =>
-          prev.map(n =>
-            n._id === notification._id ? { ...n, read: true } : n
-          )
-        );
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      } catch (error) {
-        console.error('Error marking as read:', error);
-      }
+      markAsReadMutation.mutate(notification._id);
     }
 
-    // Navigate based on notification type
     if (notification.type === 'new_donation' || notification.type === 'urgent') {
       navigate('/ngo/donations');
-    } else if (notification. type === 'reminder' || notification.type === 'completed') {
+    } else if (notification.type === 'reminder' || notification.type === 'completed') {
       navigate('/ngo/acceptances');
     }
   };
 
   const handleMarkAllAsRead = async () => {
-    try {
-      await markAllAsRead();
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
-      setUnreadCount(0);
-    } catch (error) {
-      console.error('Error marking all as read:', error);
-    }
+    markAllAsReadMutation.mutate();
   };
 
   const getFilteredNotifications = () => {
@@ -96,7 +116,7 @@ const Notifications = () => {
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
     
-    const diffDays = Math. floor(diffHours / 24);
+    const diffDays = Math.floor(diffHours / 24);
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
     
     return notifDate.toLocaleDateString('en-IN', {

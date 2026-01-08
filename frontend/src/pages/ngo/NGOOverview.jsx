@@ -3,40 +3,33 @@ import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getNearbyDonations } from '../../services/donationService';
 import { getNGOAnalytics } from '../../services/ngoService';
+import { useQuery } from '@tanstack/react-query';
 
 const NGOOverview = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
+  
+  
+  
+  const {data, isLoading: loading, isError} = useQuery({
+    queryKey: ['ngoOverviewData'],
+    queryFn: async ()=>{
+      const response = await getNGOAnalytics();
+      return response;
+    },
+    staleTime: 60*1000,
+    refetchOnMount:true,
+    refetchOnWindowFocus:false,
+    retry:2
+  })
+  
+  const stats = data?.stats || {
     totalReceived: { count: 0, change: 0 },
     peopleFed: { count: 0, change: 0 },
     activeAcceptances: { count: 0, change: 0 },
     thisMonth:  { count: 0, change:  0 }
-  });
-  const [nearbyOpportunities, setNearbyOpportunities] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // Fetch analytics
-      const analyticsRes = await getNGOAnalytics();
-      if (analyticsRes.success) {
-        setStats(analyticsRes.analytics);
-      }
-
-      // Fetch nearby opportunities
-      const donationsRes = await getNearbyDonations({ limit: 3, status: 'Pending' });
-      setNearbyOpportunities(donationsRes.data || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
   };
+
+  const nearbyOpportunities = data?.nearbyOpportunities || [];
 
   const getTimeRemaining = (expiryTime) => {
     const now = new Date();
@@ -54,7 +47,6 @@ const NGOOverview = () => {
     if (hours < 24) {
       return { text: `${hours} hours`, urgent: hours < 3 };
     }
-    
     const days = Math.floor(hours / 24);
     return { text: `${days} days`, urgent: false };
   };

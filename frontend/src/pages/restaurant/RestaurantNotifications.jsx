@@ -11,7 +11,6 @@ const RestaurantNotifications = () => {
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'unread'
   const notifications = [];
   const unreadCount = 0;
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchNotifications();
@@ -87,36 +86,18 @@ const RestaurantNotifications = () => {
   const handleNotificationClick = async (notification) => {
     // Mark as read
     if (! notification.read) {
-      try {
-        await markAsRead(notification._id);
-        setNotifications(prev =>
-          prev.map(n =>
-            n._id === notification._id ?  { ...n, read: true } : n
-          )
-        );
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      } catch (error) {
-        console.error('Error marking as read:', error);
-      }
+      markAsReadMutation.mutate(notification._id);
     }
-
+    
     // Navigate based on notification type
     if (notification.type === 'donation_accepted' || notification.type === 'donation_picked_up') {
       navigate('/restaurant/donations');
     }
   };
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      await markAllAsRead();
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
-      setUnreadCount(0);
-    } catch (error) {
-      console.error('Error marking all as read:', error);
-    }
+  const handleMarkAllAsRead = () => {
+  markAllAsReadMutation.mutate();
   };
+  
 
   const getFilteredNotifications = () => {
     if (activeTab === 'unread') {
@@ -172,6 +153,7 @@ const RestaurantNotifications = () => {
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllAsRead}
+              disabled={markAllAsReadMutation.isPending}
               className="px-4 py-2 text-green-600 hover:text-green-700 font-semibold text-sm transition-colors"
             >
               Mark all as read
@@ -206,7 +188,7 @@ const RestaurantNotifications = () => {
 
           {/* Notifications List */}
           <div className="divide-y divide-gray-200">
-            {loading ? (
+            {isLoading ? (
               <div className="p-12 text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
                 <p className="text-gray-600">Loading notifications...</p>
@@ -247,7 +229,7 @@ const RestaurantNotifications = () => {
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
-                        <p className="text-xs text-gray-500">{getTimeAgo(notification. createdAt)}</p>
+                        <p className="text-xs text-gray-500">{getTimeAgo(notification.createdAt)}</p>
                       </div>
                     </div>
                   </div>

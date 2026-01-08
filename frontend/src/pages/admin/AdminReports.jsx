@@ -89,12 +89,12 @@ const AdminReports = () => {
 
   return (
     <DashboardLayout role="admin">
-      <div className="p-4 sm: p-6 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Analytics & Reports</h1>
-            <p className="text-sm sm: text-base text-gray-600">Comprehensive platform analytics and insights</p>
+            <p className="text-sm sm:text-base text-gray-600">Comprehensive platform analytics and insights</p>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button

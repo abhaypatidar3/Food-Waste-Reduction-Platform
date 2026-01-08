@@ -4,9 +4,10 @@ import { adminAPI } from '../../services/adminService';
 import { Search, Check, X, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import {useAdmin } from '../../context/AdminContext';
 
+import { useQuery, useMutation } from '@tanstack/react-query';
+
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const {filters, setFilters, status, setStatus} = useAdmin();
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -14,9 +15,18 @@ const AdminUsers = () => {
     totalUsers: 0
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, [filters, pagination.currentPage]);
+  const {data, isLoading:loading, isError,refetch} = useQuery({
+    queryKey : ['adminUsers', filters, pagination.currentPage],
+    queryFn: async ()=>{
+      const response = await adminAPI.getUsers({
+        page: pagination.currentPage,
+        limit: 10,
+        ... filters
+      });
+    },
+    staleTime: 60*1000,
+
+  })
 
   const fetchUsers = async () => {
     setLoading(true);

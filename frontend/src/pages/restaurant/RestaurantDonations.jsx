@@ -4,39 +4,32 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import DonationCard from '../../components/restaurant/DonationCard';
 import { getMyDonations } from '../../services/donationService';
 import { Plus } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 const RestaurantDonations = () => {
   const navigate = useNavigate();
-  const [donations, setDonations] = useState([]);
   const [filteredDonations, setFilteredDonations] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'pending', 'accepted', 'pickedUp'
 
-  useEffect(() => {
-    fetchDonations();
-  }, []);
-
-  useEffect(() => {
-    filterDonations();
-  }, [activeTab, donations]);
-
-  const fetchDonations = async () => {
-    setLoading(true);
-    try {
+  const {data, isLoading: loading, isError, refetch } = useQuery({
+    queryKey: ['RestaurantDonations'],
+    queryFn: async ()=>{
       const response = await getMyDonations();
       if (response.success) {
-        // Filter only active donations (not picked up)
         const activeDonations = response.data.filter(
           d => d.status === 'Picked Up' || d.status === 'Pending' || d.status === 'Accepted'
         );
-        setDonations(activeDonations);
+        return activeDonations;
       }
-    } catch (error) {
-      console.error('Error fetching donations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error('Failed to fetch donations');
+    },
+    staleTime: 2 * 60 * 1000,
+    retry: 2,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  })
+
+  const donations = data || [];
 
   const filterDonations = () => {
     if (activeTab === 'all') {
@@ -177,3 +170,7 @@ const RestaurantDonations = () => {
 };
 
 export default RestaurantDonations;
+
+
+
+

@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminAPI } from '../../services/adminService';
 import { Package, Trash2, MapPin, Clock, User } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const AdminDonations = () => {
-  const [donations, setDonations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [filters, setFilters] = useState({
     status: 'all',
     category: 'all'
@@ -17,13 +17,11 @@ const AdminDonations = () => {
   });
   const [selectedDonation, setSelectedDonation] = useState(null);
 
-  useEffect(() => {
-    fetchDonations();
-  }, [filters, pagination.currentPage]);
   
-  const fetchDonations = async () => {
-    setLoading(true);
-    try {
+
+  const {data, isLoading:loading, refetch} = useQuery({
+    queryKey: ['adminDonations', filters, pagination.currentPage],
+    queryFn: async ()=>{
       const response = await adminAPI.getDonations({
         page: pagination.currentPage,
         limit: 10,
@@ -31,32 +29,46 @@ const AdminDonations = () => {
       });
 
       if (response.success) {
-        setDonations(response.donations);
         setPagination({
           currentPage: response.currentPage,
           totalPages: response.totalPages,
           totalDonations: response.totalDonations
         });
+        return response.donations;
       }
-    } catch (error) {
-      console.error('Error fetching donations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error('Failed to fetch donations');
+    },
+    staleTime: 60*1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus:false,
+    retry:2
+  }
+)
+  const donations = data || [];
 
-  const handleDelete = async (donationId) => {
-    if (!window.confirm('Are you sure you want to delete this donation?  This action cannot be undone.')) return;
-
-    try {
-      const response = await adminAPI.deleteDonation(donationId);
+  const deleteDonationMutation = useMutation({
+    mutationFn: async (donationId) => {
+      return await adminAPI.deleteDonation(donationId);
+    },
+    onSuccess: (response) => {
       if (response.success) {
-        alert('Donation deleted successfully!');
-        fetchDonations();
+        alert('Donation deleted successfully! ');
+        // Invalidate and refetch donations
+        queryClient.invalidateQueries(['adminDonations']);
       }
-    } catch (error) {
+    },
+    onError: (error) => {
       alert(error.response?.data?.message || 'Failed to delete donation');
     }
+  });
+
+  const handleDelete = async (donationId) => {
+    if (! window.confirm('Are you sure you want to delete this donation?  This action cannot be undone.')) return;
+    deleteDonationMutation.mutate(donationId);
+  };
+
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, currentPage: newPage }));
   };
 
   const getStatusBadge = (status) => {
@@ -294,7 +306,7 @@ const AdminDonations = () => {
             </p>
             <div className="flex gap-2">
               <button
-                onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage - 1 })}
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={pagination.currentPage === 1}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
               >
@@ -304,7 +316,7 @@ const AdminDonations = () => {
                 Page {pagination.currentPage} of {pagination. totalPages}
               </span>
               <button
-                onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage + 1 })}
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={pagination.currentPage === pagination. totalPages}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
               >
@@ -427,7 +439,7 @@ const AdminDonations = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Picked Up:</span>
                       <span className="font-semibold">
-                        {new Date(selectedDonation. pickedUpAt).toLocaleString('en-IN')}
+                        {new Date(selectedDonation.pickedUpAt).toLocaleString('en-IN')}
                       </span>
                     </div>
                   )}

@@ -13,15 +13,16 @@ const {
   getNearbyDonations,
   getDonationStats
 } = require('../controllers/donationController');
+const { donationLimiter, acceptDonationLimiter, apiLimiter } = require('../middleware/rateLimiter');
 
 // Restaurant routes
-router.post('/', protect, authorize('restaurant'), createDonation);
+router.post('/', protect, authorize('restaurant'), donationLimiter, createDonation);
 router.get('/my-donations', protect, authorize('restaurant'), getMyDonations);
 router.get('/stats', protect, authorize('restaurant'), getDonationStats);
 
 // NGO routes
-router.get('/nearby', protect, authorize('ngo'), getNearbyDonations);
-router.patch('/:id/accept', protect, authorize('ngo'), acceptDonation);
+router.get('/nearby', protect, authorize('ngo'), apiLimiter, getNearbyDonations);
+router.patch('/:id/accept', protect, authorize('ngo'), acceptDonationLimiter, acceptDonation);
 router.patch('/:id/picked-up', protect, authorize('ngo'), markAsPickedUp);
 
 // Common routes

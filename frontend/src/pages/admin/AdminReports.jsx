@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminAPI } from '../../services/adminService';
+import { useQuery } from '@tanstack/react-query';
+
 import { 
   Users, 
   ChefHat, 
@@ -22,31 +24,29 @@ import {
 } from 'lucide-react';
 
 const AdminReports = () => {
-  const [reports, setReports] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
   const [activeSection, setActiveSection] = useState('overview');
 
-  useEffect(() => {
-    loadReports();
-  }, []);
-
-  const loadReports = async () => {
-    try {
-      setLoading(true);
-      setError('');
+  const {data, isLoading:loading, isError, error, refetch } = useQuery({
+    queryKey: ['adminReports'],
+    queryFn: async ()=>{
       const response = await adminAPI.getReports();
       if (response. success) {
-        setReports(response.data);
         setLastUpdated(new Date());
+        return response.data;
       }
-    } catch (error) {
-      console.error('Load reports error:', error);
-      setError('Failed to load analytics data');
-    } finally {
-      setLoading(false);
-    }
+      throw new Error('Failed to fetch reports');
+    },
+    staleTime: 60*1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus:false,
+    retry:2
+  })
+
+  const reports = data || null;
+
+  const handleRefresh = () => {
+    refetch();
   };
 
   const handleExport = () => {
@@ -67,7 +67,7 @@ const AdminReports = () => {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <DashboardLayout role="admin">
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -98,7 +98,7 @@ const AdminReports = () => {
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
-              onClick={loadReports}
+              onClick={handleRefresh}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
             >
               <RefreshCw size={18} />

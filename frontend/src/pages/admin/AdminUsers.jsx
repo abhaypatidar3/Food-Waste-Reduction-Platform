@@ -4,17 +4,17 @@ import { adminAPI } from '../../services/adminService';
 import { Search, Check, X, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import {useAdmin } from '../../context/AdminContext';
 
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const AdminUsers = () => {
-  const [users, setUsers] = useState([]);
+  
   const {filters, setFilters, status, setStatus} = useAdmin();
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalUsers: 0
   });
-
+  const queryClient = useQueryClient();
   const {data, isLoading:loading, isError,refetch} = useQuery({
     queryKey : ['adminUsers', filters, pagination.currentPage],
     queryFn: async ()=>{
@@ -23,75 +23,86 @@ const AdminUsers = () => {
         limit: 10,
         ... filters
       });
-    },
-    staleTime: 60*1000,
-
-  })
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const response = await adminAPI.getUsers({
-        page: pagination.currentPage,
-        limit: 10,
-        ... filters
-      });
-
       if (response.success) {
-        setUsers(response.users);
         setPagination({
           currentPage: response.currentPage,
-          totalPages: response.totalPages,
-          totalUsers: response.totalUsers
+          totalPages: response. totalPages,
+          totalUsers:  response.totalUsers
         });
+        return response.users;
       }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    staleTime: 60*1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus:false,
+    retry:2
+  })
 
-  const handleVerify = async (userId) => {
-    if (! window.confirm('Verify this user?')) return;
+  const users = data || [];
 
-    try {
-      const response = await adminAPI.verifyUser(userId);
+
+  const verifyUserMutation = useMutation({
+    mutationFn: async (userId) => {
+      return await adminAPI.verifyUser(userId);
+    },
+    onSuccess: (_,userId)=>{
       if (response.success) {
         alert('User verified successfully!');
-        fetchUsers();
+        queryClient.invalidateQueries(['adminUsers']);
       }
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to verify user');
+    },
+    onError: (error) => {
+      alert(error.response?.data?. message || 'Failed to verify user');
     }
+  })
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async (userId) => {
+      return await adminAPI.toggleUserStatus(userId);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        alert(response.message);
+        queryClient.invalidateQueries(['adminUsers']);
+      }
+    },
+    onError: (error) => {
+      alert(error.response?.data?. message || 'Failed to update user');
+    }
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId) => {
+      return await adminAPI.deleteUser(userId);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        alert('User deleted successfully!');
+        queryClient.invalidateQueries(['adminUsers']);
+      }
+    },
+    onError: (error) => {
+      alert(error.response?.data?.message || 'Failed to delete user');
+    }
+  });
+
+  const handleVerify = async (userId) => {
+    if (!window.confirm('Verify this user?')) return;
+    verifyUserMutation.mutate(userId);
   };
   
   const handleToggleStatus = async (userId) => {
-    if (!window.confirm('Toggle user status?')) return;
-
-    try {
-      const response = await adminAPI.toggleUserStatus(userId);
-      if (response.success) {
-        alert(response.message);
-        fetchUsers();
-      }
-    } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update user');
-    }
+    if (!window. confirm('Toggle user status?')) return;
+    toggleStatusMutation.mutate(userId);
   };
 
   const handleDelete = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?  This action cannot be undone.')) return;
+    if (!window.confirm('you want to delete this user?')) return;
+    deleteUserMutation.mutate(userId);
+  };
 
-    try {
-      const response = await adminAPI.deleteUser(userId);
-      if (response.success) {
-        alert('User deleted successfully!');
-        fetchUsers();
-      }
-    } catch (error) {
-      alert(error.response?.data?. message || 'Failed to delete user');
-    }
+   const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, currentPage: newPage }));
   };
 
   const getRoleBadge = (role) => {
@@ -278,7 +289,7 @@ const AdminUsers = () => {
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage - 1 })}
+                  onClick={() => handlePageChange(pagination.currentPage - 1)}
                   disabled={pagination. currentPage === 1}
                   className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                 >
@@ -288,7 +299,7 @@ const AdminUsers = () => {
                   Page {pagination.currentPage} of {pagination.totalPages}
                 </span>
                 <button
-                  onClick={() => setPagination({ ...pagination, currentPage: pagination. currentPage + 1 })}
+                  onClick={() => handlePageChange(pagination.currentPage - 1)}
                   disabled={pagination.currentPage === pagination.totalPages}
                   className="px-4 py-2 border border-gray-300 rounded-lg hover: bg-gray-50 disabled: opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                 >

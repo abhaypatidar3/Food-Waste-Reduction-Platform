@@ -7,6 +7,7 @@ const ngoRoutes = require('./routes/ngoRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const landingPageRoutes = require('./routes/landingPageRoutes');
+const { generalLimiter } = require('./middleware/rateLimiter');
 
 dotenv.config();
 
@@ -37,6 +38,8 @@ app.get('/', (req, res) => {
   });
 });
 
+app.use('/api/', generalLimiter); //applied to all req
+
 // Mount routers
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/donations', require('./routes/donationRoutes'));
@@ -51,12 +54,12 @@ app.use((err, req, res, next) => {
   res. status(statusCode).json({
     success: false,
     message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err. stack : undefined
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running in ${process. env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Server running in ${process. env.NODE_ENV} mode on port ${PORT}`);
 });

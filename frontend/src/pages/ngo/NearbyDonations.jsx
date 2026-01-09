@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { getNearbyDonations, acceptDonation } from '../../services/donationService';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-apply
 const NearbyDonations = () => {
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState('list'); 

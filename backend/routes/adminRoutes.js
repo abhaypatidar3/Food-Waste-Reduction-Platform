@@ -11,10 +11,11 @@ const {
   deleteUser,
   deleteDonation
 } = require('../controllers/adminController');
+const { apiLimiter } = require('../middleware/rateLimiter');
 
 // All routes require admin role
-router.use(protect);
-router.use(authorize('admin'));
+router.use(protect,authorize('admin'), apiLimiter);
+// router.use(authorize('admin'));
 
 // Stats
 router.get('/stats', getAdminStats);

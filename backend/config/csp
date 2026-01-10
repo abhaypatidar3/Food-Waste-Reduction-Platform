@@ -1,0 +1,51 @@
+// Simple CSP Configuration
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+const cspConfig = {
+  directives:  {
+    defaultSrc: ["'self'"],
+    
+    scriptSrc: [
+      "'self'",
+      ...(isDevelopment ? ["'unsafe-inline'", "'unsafe-eval'"] : []),
+    ],
+    
+    styleSrc: [
+      "'self'",
+      "'unsafe-inline'", // Required for Tailwind CSS
+      "https://fonts.googleapis.com",
+    ],
+    
+    imgSrc: [
+      "'self'",
+      "data:",
+      "blob:",
+      "https:",
+    ],
+    
+    fontSrc: [
+      "'self'",
+      "data:",
+      "https://fonts.gstatic.com",
+    ],
+    
+    connectSrc: [
+      "'self'",
+      "http://localhost:5000",
+      "http://localhost:5173",
+      "ws://localhost:5173", // Vite HMR
+    ],
+    
+    frameSrc: ["'none'"],
+    objectSrc: ["'none'"],
+
+    baseUri: ["'self'"],
+    formAction: ["'self'"],
+    frameAncestors: ["'none'"], // Prevents clickjacking
+    
+    ...(isDevelopment ?  {} : { upgradeInsecureRequests: [] }),
+  },
+};
+
+module.exports = { cspConfig };

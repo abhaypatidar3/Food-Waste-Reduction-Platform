@@ -8,12 +8,19 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const landingPageRoutes = require('./routes/landingPageRoutes');
 const { generalLimiter } = require('./middleware/rateLimiter');
+const { cspConfig } = require('./config/csp');
 
 dotenv.config();
 
 connectDB();
 
 const app = express();
+//csp interception
+const helmet = require('helmet');
+app.use(helmet({
+  contentSecurityPolicy:  cspConfig,
+}));
+app.use('/api/debug', require('./routes/debug'));
 
 // Middleware
 app.use(cors({

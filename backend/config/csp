@@ -13,7 +13,7 @@ const cspConfig = {
     
     styleSrc: [
       "'self'",
-      "'unsafe-inline'", // Required for Tailwind CSS
+      "'unsafe-inline'", 
       "https://fonts.googleapis.com",
     ],
     
@@ -31,10 +31,17 @@ const cspConfig = {
     ],
     
     connectSrc: [
-      "'self'",
-      "http://localhost:5000",
-      "http://localhost:5173",
-      "ws://localhost:5173", // Vite HMR
+     
+      ...(isDevelopment 
+        ? [
+            "http://localhost:5000",
+            "http://localhost:5173",
+            "ws://localhost:5173"
+          ]
+        : [
+            process.env.API_URL || "https://yourdomain.com"
+          ]
+      ),
     ],
     
     frameSrc: ["'none'"],
@@ -43,6 +50,7 @@ const cspConfig = {
     baseUri: ["'self'"],
     formAction: ["'self'"],
     frameAncestors: ["'none'"], // Prevents clickjacking
+    upgradeInsecureRequests: [],
     
     ...(isDevelopment ?  {} : { upgradeInsecureRequests: [] }),
   },

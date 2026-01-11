@@ -54,7 +54,7 @@ const emailLimiter = rateLimit({
 
 
 const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, 
+  windowMs: 60*1000, 
   max: 30, 
   message: {
     success: false,
@@ -64,8 +64,8 @@ const apiLimiter = rateLimit({
 
 
 const donationLimiter = rateLimit({
-  windowMs: 60 * 1000, 
-  max: 5, // 1 min me maximum 5 donations create kar sakte hai
+  windowMs: 60* 1000, 
+  max: 10, // 1 min me maximum 5 donations create kar sakte hai
   message: {
     success: false,
     message: 'Please wait before creating another donation'

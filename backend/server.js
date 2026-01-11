@@ -20,6 +20,7 @@ const helmet = require('helmet');
 app.use(helmet({
   contentSecurityPolicy:  cspConfig,
 }));
+app.set('trust proxy', 1);
 app.use('/api/debug', require('./routes/debug'));
 
 // Middleware

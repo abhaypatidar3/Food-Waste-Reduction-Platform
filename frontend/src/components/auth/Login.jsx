@@ -47,11 +47,11 @@ const Login = () => {
       return response;
     },
     onSuccess: (data) => {
-      console.log('✅ Login successful:', data);
-      if (data.token) {
-        localStorage.setItem('token', data. token);
-        sessionStorage.setItem('token', data.token);
-      }
+      console.log('Login successful:', data);
+      // if (data.token) {
+      //   localStorage.setItem('token', data. token);
+      //   sessionStorage.setItem('token', data.token);
+      // }
 
       if (data.user) {
         const userJson = JSON.stringify(data.user);

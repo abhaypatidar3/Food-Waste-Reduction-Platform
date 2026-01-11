@@ -22,10 +22,10 @@ export const AuthProvider = ({ children }) => {
   // Load user from localStorage on mount
   useEffect(() => {
     const loadUser = async () => {
-      const token = localStorage.getItem('token');
+      // const token = localStorage.getItem('token');
       const savedUser = localStorage.getItem('user');
 
-      if (token && savedUser && token !== 'none') {
+      if (savedUser) {
         try {
           // Verify token is still valid
           const response = await authAPI. getMe();
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
           // Token invalid or expired, clear storage
           console.error('Token validation failed:', error);
-          localStorage.removeItem('token');
+          // localStorage.removeItem('token');
           localStorage. removeItem('user');
           setUser(null);
           setIsAuthenticated(false);
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     loadUser();
-  }, []); // Remove dependencies to avoid infinite loops
+  }, []); 
 
   // Register function
   const register = async (userData) => {
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         // If no verification needed, login user
-        localStorage.setItem('token', response. token);
+        // localStorage.setItem('token', response. token);
         localStorage.setItem('user', JSON.stringify(response.user));
         
         setUser(response.user);
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
       
       if (response.success) {
         // After verification, login user
-        localStorage. setItem('token', response.token);
+        // localStorage. setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response. user));
         
         setUser(response.user);
@@ -185,6 +185,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       // Clear all auth data (frontend)
       setUser(null);
+      setIsAuthenticated(false);
       // localStorage. removeItem('token'); // token sirf backend pe hai ab
       localStorage.removeItem('user');
       

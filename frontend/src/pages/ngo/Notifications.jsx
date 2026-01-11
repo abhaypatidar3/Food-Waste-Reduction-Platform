@@ -14,7 +14,7 @@ const Notifications = () => {
     queryKey: ['notifications'],
     queryFn: async ()=>{
       const response = await getNotifications();
-      return response;
+      return response.data || response;
     },
     staleTime: 60*1000,
     refetchOnMount:true,
@@ -22,7 +22,7 @@ const Notifications = () => {
     retry:2
   })
 
-  const notifications = data?.notification || [];
+  const notifications = data?.notifications || [];
   const unreadCount = data?.unreadCount || 0;
 
   const markAsReadMutation = useMutation({

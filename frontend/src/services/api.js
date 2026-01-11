@@ -3,26 +3,26 @@ import axios from 'axios';
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  headers: {
-    'Content-Type': 'application/json'
-  },
+  // headers: {
+  //   'Content-Type': 'application/json'
+  // },
   withCredentials: true
 });
 
 // Request interceptor - Add token to requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    // Only add token if it exists and is not 'none'
-    if (token && token !== 'none' && token. length > 10) {
-      config.headers. Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// api.interceptors.request.use(
+//   (config) => {
+//     const token = localStorage.getItem('token');
+//     // Only add token if it exists and is not 'none'
+//     if (token && token !== 'none' && token. length > 10) {
+//       config.headers. Authorization = `Bearer ${token}`;
+//     }
+//     return config;
+//   },
+//   (error) => {
+//     return Promise.reject(error);
+//   }
+// );
 
 // Response interceptor - Handle errors globally
 api.interceptors.response.use(
@@ -30,10 +30,10 @@ api.interceptors.response.use(
   (error) => {
     const isAuthEndpoint = error.config?.url?.includes('/auth/');
     
-    // Handle 401 Unauthorized errors (except for auth endpoints)
+   
     if (error.response?.status === 401 && !isAuthEndpoint) {
       console.warn('Unauthorized access - clearing session');
-      localStorage.removeItem('token');
+      // localStorage.removeItem('token');
       localStorage.removeItem('user');
       
       // Only redirect if not already on login page
@@ -135,7 +135,7 @@ export const authAPI = {
       return response.data;
     } catch (error) {
       if (error.response?.status === 401) {
-        localStorage.removeItem('token');
+        // localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
       throw error;

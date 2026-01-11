@@ -21,7 +21,7 @@ const generalLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, 
-  max: 5, // ek ip se sirf 5 login attempts har 5 minute me
+  max: 15, // ek ip se sirf 15 login attempts har 5 minute me
   skipSuccessfulRequests: false,
   message: {
     success: false,

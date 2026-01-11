@@ -12,7 +12,7 @@ const MyAcceptances = () => {
     queryKey: ['ngoMyAcceptances'],
     queryFn: async ()=>{
       const response = await getAllDonations();
-      return response;
+      return response.data || [];
     },
     staleTime: 60*1000,
     refetchOnMount: true,
@@ -20,7 +20,7 @@ const MyAcceptances = () => {
     retry:2
   });
 
-  const donations = (response?.data || []).filter(
+  const donations = (data || []).filter(
     d=>d.status === 'Accepted' || d.status === 'Picked Up'
   );
 
@@ -31,11 +31,8 @@ const MyAcceptances = () => {
     onSuccess: (_,donationId)=>{
       queryClient.setQueryData(['ngoMyAcceptances'], (old)=>{
         if(!old) return old;
-        return old.map(d=>{
-          d._id === donationId 
-            ? { ...d, status: 'Picked Up', pickedUpAt: new Date().toISOString() }
-            : d;
-        });
+
+        return old.map(d => d._id === donationId  ? { ... d, status: 'Picked Up', pickedUpAt: new Date().toISOString() } : d );
       });
       refetch();
     },

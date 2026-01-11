@@ -56,13 +56,13 @@ const Login = () => {
       if (data.user) {
         const userJson = JSON.stringify(data.user);
         localStorage.setItem('user', userJson);
-        sessionStorage.setItem('user', userJson);
+
       }
 
-      // Set cookie
-      if (data.token) {
-        document.cookie = `token=${data.token}; path=/; max-age=604800`;
-      }
+      // // Set cookie
+      // if (data.token) {
+      //   document.cookie = `token=${data.token}; path=/; max-age=604800`;
+      // }
 
       const role = data?.user?. role;
 

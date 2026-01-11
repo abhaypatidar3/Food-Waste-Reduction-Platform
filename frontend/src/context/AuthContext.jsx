@@ -185,13 +185,13 @@ export const AuthProvider = ({ children }) => {
     } finally {
       // Clear all auth data (frontend)
       setUser(null);
-      localStorage. removeItem('token');
+      // localStorage. removeItem('token'); // token sirf backend pe hai ab
       localStorage.removeItem('user');
       
       // Remove cookie - try multiple methods
-      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname;
-      document.cookie = 'token=; Max-Age=0; path=/;';
+      // document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      // document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname;
+      // document.cookie = 'token=; Max-Age=0; path=/;';
       
       // Redirect to login
       navigate('/login');

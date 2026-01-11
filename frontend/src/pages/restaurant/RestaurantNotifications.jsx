@@ -9,12 +9,8 @@ const RestaurantNotifications = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'unread'
-  const notifications = [];
-  const unreadCount = 0;
-
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  let notifications = [];
+  let unreadCount = 0;
 
   const {data, isLoading, isError, refetch } = useQuery({
     queryKey: ['RestaurantNotifications'],
@@ -23,12 +19,12 @@ const RestaurantNotifications = () => {
       if (response.success) {
         return {
           notifications: response.notifications,
-          unreadCount: response. unreadCount
+          unreadCount: response.unreadCount
         };
       }
       throw new Error('Failed to fetch notifications');
     },
-    staleTime: 60*1000,
+    staleTime: 5*60*1000,
     retry: 2,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -238,21 +234,7 @@ const RestaurantNotifications = () => {
             )}
           </div>
         </div>
-
-        {/* Info Box */}
-        {filteredNotifications.length > 0 && (
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <Info className="text-blue-600 flex-shrink-0" size={20} />
-              <div>
-                <h4 className="font-semibold text-blue-900 mb-1">Notification Settings</h4>
-                <p className="text-sm text-blue-700">
-                  Click on any notification to view details.  You can customize your notification preferences in Settings.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        
       </div>
     </DashboardLayout>
   );

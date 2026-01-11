@@ -14,7 +14,7 @@ const NGOOverview = () => {
     queryKey: ['ngoOverviewData'],
     queryFn: async ()=>{
       const response = await getNGOAnalytics();
-      return response;
+      return response.data || response;
     },
     staleTime: 60*1000,
     refetchOnMount:true,
@@ -22,7 +22,7 @@ const NGOOverview = () => {
     retry:2
   })
   
-  const stats = data?.stats || {
+  const stats = data?.analytics || {
     totalReceived: { count: 0, change: 0 },
     peopleFed: { count: 0, change: 0 },
     activeAcceptances: { count: 0, change: 0 },

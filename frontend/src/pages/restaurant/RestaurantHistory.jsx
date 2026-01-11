@@ -5,7 +5,7 @@ import { Calendar, TrendingUp, Award, Filter } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 const RestaurantHistory = () => {
-  const donations = [];
+  let donations = [];
   const [viewMode, setViewMode] = useState('timeline'); // 'timeline' or 'table'
   const [filters, setFilters] = useState({
     dateRange: 'last7days',
@@ -29,8 +29,7 @@ const RestaurantHistory = () => {
   })
 
   donations = data || [];
-  stats = calculateStats(donations);
-  ngos = [...new Set(donations.filter(d => d.acceptedBy).map(d => d.acceptedBy.organizationName))];
+  const ngos = [...new Set(donations.filter(d => d.acceptedBy).map(d => d.acceptedBy.organizationName))];
   const filteredDonations = applyFilters(donations, filters);
 
   const calculateStats = (donationsList) => {
@@ -67,8 +66,8 @@ const RestaurantHistory = () => {
       successRate
     };
   };
-
-   function applyFilters(donationsList, filterOptions) {
+  const stats = calculateStats(donations);
+  function applyFilters(donationsList, filterOptions) {
     let filtered = [... donationsList];
 
     const now = new Date();

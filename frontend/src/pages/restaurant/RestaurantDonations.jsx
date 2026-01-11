@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import DonationCard from '../../components/restaurant/DonationCard';
@@ -8,7 +8,6 @@ import { useQuery } from '@tanstack/react-query';
 
 const RestaurantDonations = () => {
   const navigate = useNavigate();
-  const [filteredDonations, setFilteredDonations] = useState([]);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'pending', 'accepted', 'pickedUp'
 
   const {data, isLoading: loading, isError, refetch } = useQuery({
@@ -23,7 +22,7 @@ const RestaurantDonations = () => {
       }
       throw new Error('Failed to fetch donations');
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
     retry: 2,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -31,17 +30,18 @@ const RestaurantDonations = () => {
 
   const donations = data || [];
 
-  const filterDonations = () => {
+const filteredDonations = useMemo(() => {
     if (activeTab === 'all') {
-      setFilteredDonations(donations);
+      return donations;
     } else if (activeTab === 'pending') {
-      setFilteredDonations(donations.filter(d => d.status === 'Pending'));
+      return donations.filter(d => d.status === 'Pending');
     } else if (activeTab === 'accepted') {
-      setFilteredDonations(donations.filter(d => d.status === 'Accepted'));
+      return donations.filter(d => d.status === 'Accepted');
     } else if (activeTab === 'pickedUp') {
-      setFilteredDonations(donations.filter(d => d.status === 'Picked Up'));
+      return donations.filter(d => d.status === 'Picked Up');
     }
-  };
+    return donations;
+  }, [activeTab, donations]);
 
   const getCounts = () => {
     return {
@@ -159,7 +159,7 @@ const RestaurantDonations = () => {
               <DonationCard
                 key={donation._id}
                 donation={donation}
-                onUpdate={fetchDonations}
+                onUpdate={refetch}
               />
             ))}
           </div>

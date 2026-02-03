@@ -4,6 +4,6 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 const { getNGOAnalytics } = require('../controllers/ngoController');
 const { apiLimiter } = require('../middleware/rateLimiter');
 
-router.get('/analytics', protect, authorize('ngo'), apiLimiter, getNGOAnalytics);
+router.get('/analytics', protect, authorize('ngo'), getNGOAnalytics);
 
 module.exports = router;

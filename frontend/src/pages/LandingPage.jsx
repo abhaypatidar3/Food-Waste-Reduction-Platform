@@ -22,7 +22,7 @@ const LandingPage = () => {
   const analytics = data?.analytics || null;
 
   return (
-    <div className='min-h-screen'>
+    <div className='min-h-screen overflow-x-hidden max-w-[100vw]'>
         <header className="bg-gradient-to-r from-[#1E7F5C] to-[#166651] text-white mx-0">
             <nav className='flex justify-between mx-0 py-4 items-center'>
               <div className='ml-5 bg-[#0d6444] px-3 py-2 group rounded-md text-xl font-semibold shadow-lg hover:shadow-md hover:bg-[#165f4b] transition-all duration-200 hover:rounded-xl'>

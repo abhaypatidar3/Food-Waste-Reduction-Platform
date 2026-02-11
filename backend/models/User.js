@@ -73,34 +73,34 @@ const userSchema = new mongoose.Schema({
 });
 
 
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function () {
   // Only validate on new documents or when password is modified
   if (this.isNew || this.isModified('password')) {
-    try {
-      const dataToValidate = {
-        email: this.email,
-        role: this.role,
-        isVerified: this.isVerified,
-        isActive:  this.isActive
-      };
+    const dataToValidate = {
+      email: this.email,
+      role: this.role,
+      isVerified: this.isVerified,
+      isActive: this.isActive
+    };
 
-      // Only validate password if it's being set/modified and not already hashed
-      if (this.isModified('password') && this.password) {
-        // Check already hashed or not
-        if (!this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
-          dataToValidate.password = this. password;
-        }
+    // Only validate password if being modified and not already hashed
+    if (this.isModified('password') && this.password) {
+      if (
+        !this.password.startsWith('$2a$') &&
+        !this.password.startsWith('$2b$')
+      ) {
+        dataToValidate.password = this.password;
       }
+    }
 
-      // Validate with Yup
+    try {
       await userYupSchema.validate(dataToValidate, { abortEarly: false });
     } catch (error) {
       if (error.name === 'ValidationError') {
-        // Transform Yup errors to Mongoose format
         const mongooseError = new Error('Validation failed');
         mongooseError.name = 'ValidationError';
         mongooseError.errors = {};
-        
+
         error.inner.forEach(err => {
           mongooseError.errors[err.path] = {
             message: err.message,
@@ -108,24 +108,26 @@ userSchema.pre('save', async function(next) {
             value: err.value
           };
         });
-        
-        return next(mongooseError);
+
+        throw mongooseError; // ✅ throw instead of next()
       }
-      return next(error);
+
+      throw error; // ✅ throw instead of next()
     }
   }
 
   // Hash password before saving
   if (this.password && this.isModified('password')) {
-    // Only hash if not already hashed
-    if (!this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
+    if (
+      !this.password.startsWith('$2a$') &&
+      !this.password.startsWith('$2b$')
+    ) {
       const salt = await bcrypt.genSalt(10);
       this.password = await bcrypt.hash(this.password, salt);
     }
   }
-
-  next();
 });
+
 
 // Compare entered password with hashed password
 userSchema.methods.matchPassword = async function(enteredPassword) {

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const Yup = require('yup');
 const { restaurantYupSchema } = require('./Restaurant');
 
@@ -21,13 +20,13 @@ const donationYupSchema = Yup.object().shape({
   acceptedBy: Yup.string().matches(/^[0-9a-fA-F]{24}$/, 'Invalid user ID format').nullable().optional(),
   acceptedAt: Yup.date().nullable().optional(),
   pickedUpAt: Yup.date().nullable().optional(),
-});  
+});
 
-const donationSchema = new mongoose. Schema({
+const donationSchema = new mongoose.Schema({
   restaurant: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required:  true
+    required: true
   },
   foodName: {
     type: String,
@@ -44,7 +43,7 @@ const donationSchema = new mongoose. Schema({
     enum: ['Cooked Food', 'Raw Ingredients', 'Packaged Food', 'Bakery', 'Fruits & Vegetables', 'Other'],
     required: true
   },
-  expiryTime:  {
+  expiryTime: {
     type: Date,
     required: [true, 'Please provide expiry time']
   },
@@ -69,12 +68,12 @@ const donationSchema = new mongoose. Schema({
     default: null
   },
   acceptedAt: {
-    type:  Date
+    type: Date
   },
   pickedUpAt: {
-    type:  Date
+    type: Date
   },
-  images:  [{
+  images: [{
     type: String
   }],
   isActive: {
@@ -88,46 +87,45 @@ const donationSchema = new mongoose. Schema({
 // Index for location-based queries
 donationSchema.index({ 'pickupAddress.coordinates': '2dsphere' });
 
-donationSchema.pre('save', async function(next){
-    if(this.isNew){
-      try{
-        const dataToValidate = {
-          restaurant: this.restaurant.toString(),
-          foodName: this.foodName,
-          quantity: this.quantity,
-          category: this.category,
-          expiryTime: this.expiryTime,
-          pickupAddress: this.pickupAddress,
-          pickupInstructions: this.pickupInstructions,
-          status: this.status,
-          isActive: this.isActive,
-          acceptedBy: this.acceptedBy ? this.acceptedBy.toString() : null,
-          acceptedAt: this.acceptedAt,
-          pickedUpAt: this.pickedUpAt,
-        };
+donationSchema.pre('save', async function() {
+  if (this.isNew) {
+    try {
+      const dataToValidate = {
+        restaurant: this.restaurant.toString(),
+        foodName: this.foodName,
+        quantity: this.quantity,
+        category: this.category,
+        expiryTime: this.expiryTime,
+        pickupAddress: this.pickupAddress,
+        pickupInstructions: this.pickupInstructions,
+        status: this.status,
+        isActive: this.isActive,
+        acceptedBy: this.acceptedBy ? this.acceptedBy.toString() : null,
+        acceptedAt: this.acceptedAt,
+        pickedUpAt: this.pickedUpAt,
+      };
 
-        await donationYupSchema.validate(dataToValidate, {abortEarly: false});
-        next();
-      } catch(error){
-        if(error.name === 'validationError'){
-          const mongooseError = new Error('Validation failed');
-          mongooseError.name = 'ValidationError';
-          mongooseError.errors = {};
+      await donationYupSchema.validate(dataToValidate, { abortEarly: false });
+      
+    } catch (error) {
+      if (error.name === 'ValidationError') {
+        const mongooseError = new Error('Validation failed');
+        mongooseError.name = 'ValidationError';
+        mongooseError.errors = {};
 
-          error.inner.forEach(err=>{
-            mongooseError.errors[err.path] = {
-              message: err.message,
-              path: err.path,
-              value: err.value
-            };
-          });
-          return next(mongooseError);
-        }
-        return next(error);
+        error.inner.forEach(err => {
+          mongooseError.errors[err.path] = {
+            message: err.message,
+            path: err.path,
+            value: err.value
+          };
+        });
+        
+        throw mongooseError;
       }
-    }else{
-      next();
+      throw error;
     }
+  }
 });
 
 // Auto-expire donations
@@ -139,5 +137,5 @@ donationSchema.methods.checkExpiry = function() {
   }
 };
 
-module.exports = mongoose. model('Donation', donationSchema);
-module.exports. donationYupSchema = donationYupSchema;
+module.exports = mongoose.model('Donation', donationSchema);
+module.exports.donationYupSchema = donationYupSchema;

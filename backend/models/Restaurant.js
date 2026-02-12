@@ -46,10 +46,8 @@ const restaurantSchema = new mongoose.Schema({
     match: [/^\d{10}$/, 'Please provide a valid 10-digit phone number']
   },
   address: {
-    street: String,
-    city: String,
-    state: String,
-    zipCode: String
+    type: String,
+    required: [true, 'Address is required'],
   },
   location: {
     type: {

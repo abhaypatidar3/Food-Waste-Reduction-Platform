@@ -10,12 +10,7 @@ const restaurantYupSchema = Yup.object().shape({
   phone: Yup.string()
     .required('Phone number is required')
     .matches(/^\d{10}$/, 'provide valid 10-digit phone number'),
-  address: Yup.object().shape({
-    street: Yup.string().required('Street is required').trim(),
-    city: Yup.string().required('City is required').trim(),
-    state: Yup.string().required('State is required').trim(),
-    zipCode: Yup.string().required('Zip code is required').trim()
-  }),
+  address: Yup.string().required('Address is required'),
   location: Yup.string().optional(),
   operatingHours: Yup.string()
     .trim()

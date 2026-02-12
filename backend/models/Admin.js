@@ -21,35 +21,34 @@ const adminSchema = new mongoose.Schema({
   }]
 });
 
-adminSchema.pre('save', async function(next){
-  if(this.isNew){
-    try{
+adminSchema.pre('save', async function() {
+  if (this.isNew) {
+    try {
       const dataToValidate = {
         fullName: this.fullName,
         permissions: this.permissions
       };
-      await adminYupSchema.validate(dataToValidate, {abortEarly: false});
-      next();
-    }catch(error){
-      if(error.name === 'validationError'){
+      
+      await adminYupSchema.validate(dataToValidate, { abortEarly: false });
+      
+    } catch (error) {
+      if (error.name === 'ValidationError') {
         const mongooseError = new Error('Validation failed');
-        mongooseError.name = 'validationError';
+        mongooseError.name = 'ValidationError';
         mongooseError.errors = {};
-
-        error.inner.forEach(err=>{
-          mongooseError.errors[err.path]={
+        
+        error.inner.forEach(err => {
+          mongooseError.errors[err.path] = {
             message: err.message,
             path: err.path,
             value: err.value
           };
         });
-        return next(mongooseError);
+        
+        throw mongooseError;
       }
-      return next(error);
+      throw error;
     }
-  }
-  else{
-    next();
   }
 });
 

@@ -26,22 +26,18 @@ const NearbyDonations = () => {
 
   const donations = data || [];
 
-  const acceptDonationMutation = useMutation({
-    mutationFn: async (donationId)=>{
-      return await acceptDonation(donationId);
-    },
-    onSuccess: ()=>{
-      alert('Donation accepted successfully!');
-      queryClient.setQueryData(['nearbyDonations', filters], (old) => {
-        if (!old) return old;
-        return old.filter(d => d._id !== donationId);
-      });
-      refetch();
-    },
-    onError: (error)=>{
-      alert(error.response?.data?.message || 'Failed to accept donation');
-    }
-  })
+const acceptDonationMutation = useMutation({
+  mutationFn: async (donationId) => {
+    return await acceptDonation(donationId);
+  },
+  onSuccess: () => {
+    alert('Donation accepted successfully!');
+    refetch(); // This will fetch fresh data
+  },
+  onError: (error) => {
+    alert(error.response?.data?.message || 'Failed to accept donation');
+  }
+});
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;

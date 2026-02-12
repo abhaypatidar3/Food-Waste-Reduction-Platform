@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Yup = require('yup');
 
-const notificationYupSchema= Yup.object().shape({
+const notificationYupSchema = Yup.object().shape({
   recipient: Yup.string().required('Recipient is required'),
   type: Yup.string().oneOf(['new_donation', 'urgent', 'reminder', 'completed', 'impact', 'accepted'], 'Invalid notification type').required('Notification type is required'),
   title: Yup.string().required('Title is required').trim(),
@@ -10,16 +10,14 @@ const notificationYupSchema= Yup.object().shape({
   read: Yup.boolean().default(false)
 });
 
-
-
 const notificationSchema = new mongoose.Schema({
   recipient: {
-    type: mongoose. Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
   type: {
-    type:  String,
+    type: String,
     enum: ['new_donation', 'urgent', 'reminder', 'completed', 'impact', 'accepted'],
     required: true
   },
@@ -32,7 +30,7 @@ const notificationSchema = new mongoose.Schema({
     required: true
   },
   relatedDonation: {
-    type:  mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Donation'
   },
   read: {
@@ -40,44 +38,43 @@ const notificationSchema = new mongoose.Schema({
     default: false
   },
   createdAt: {
-    type:  Date,
-    default: Date. now
+    type: Date,
+    default: Date.now
   }
 });
 
-notificationSchema.pre('save', async function(next){
-  if(this.isNew){
-    try{
+notificationSchema.pre('save', async function() {
+  if (this.isNew) {
+    try {
       const dataToValidate = {
         recipient: this.recipient.toString(),
         type: this.type,
         title: this.title,
         message: this.message,
-        relatedDonation: this.relatedDonation? this.relatedDonation.toString() : null,
+        relatedDonation: this.relatedDonation ? this.relatedDonation.toString() : null,
         read: this.read
       };
-      await notificationYupSchema.validate(dataToValidate, {abortEarly: false});
-      next();
-    }catch(error){
-      if(error.name === 'validationError'){
+      
+      await notificationYupSchema.validate(dataToValidate, { abortEarly: false });
+      
+    } catch (error) {
+      if (error.name === 'ValidationError') {
         const mongooseError = new Error('Validation failed');
         mongooseError.name = 'ValidationError';
         mongooseError.errors = {};
-
-        error.inner.forEach(err=>{
+        
+        error.inner.forEach(err => {
           mongooseError.errors[err.path] = {
             message: err.message,
             path: err.path,
             value: err.value
           };
         });
-        return next(mongooseError);
+        
+        throw mongooseError;
       }
-      return next(error);
+      throw error;
     }
-  }
-  else{
-    next();
   }
 });
 
@@ -85,5 +82,4 @@ notificationSchema.pre('save', async function(next){
 notificationSchema.index({ recipient: 1, read: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Notification', notificationSchema);
-
 module.exports.notificationYupSchema = notificationYupSchema;

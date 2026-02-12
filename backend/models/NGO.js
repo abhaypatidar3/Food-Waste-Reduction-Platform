@@ -5,12 +5,7 @@ const Yup = require('yup');
 const ngoYupSchema = Yup.object().shape({
   organizationName: Yup.string().required('Organization name is required').trim().min(3, 'Org name must be at least 3 characters'),
   phone: Yup.string().required('Phone number is required').matches(/^\d{10}$/, 'provide valid 10-digit phone number'),
-  address: Yup.object().shape({
-    street: Yup.string().required('Street is required').trim(),
-    city: Yup.string().required('City is required').trim(),
-    state: Yup.string().required('State is required').trim(),
-    zipCode: Yup.string().required('Zip code is required').trim()
-  }),
+  address: Yup.object().required('Address is required'),
   location: Yup.mixed().optional(),
   certificateUrl: Yup.string().url('Invalid certificate URL format').nullable().optional(),
   totalReceived: Yup.number().integer('Total received must be an integer').min(0, 'Total received cannot be negative').default(0),
@@ -30,10 +25,8 @@ const ngoSchema = new mongoose.Schema({
     match: [/^\d{10}$/, 'Please provide a valid 10-digit phone number']
   },
   address: {
-    street: String,
-    city: String,
-    state: String,
-    zipCode: String
+    type: String,
+    required: [true, 'Address is required'],
   },
   location: {
     type: {

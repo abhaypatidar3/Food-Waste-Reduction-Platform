@@ -27,7 +27,7 @@ const LandingPage = () => {
             <nav className='flex justify-between mx-0 py-4 items-center'>
               <div className='ml-5 bg-[#0d6444] px-3 py-2 group rounded-md text-xl font-semibold shadow-lg hover:shadow-md hover:bg-[#165f4b] transition-all duration-200 hover:rounded-xl'>
                 <Leaf className='inline-block w-6 mr-2 group-hover:rotate-90 transition-all duration-400'/>
-                <span>FoodShare</span>
+                <span>Dish2Donate</span>
               </div>
               <div>
                 <div className='flex gap-4'>

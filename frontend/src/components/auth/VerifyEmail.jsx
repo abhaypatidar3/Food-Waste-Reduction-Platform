@@ -174,7 +174,7 @@ const VerifyEmail = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Leaf className="text-emerald-600" size={32} />
-            <h1 className="text-3xl font-bold text-gray-800">FoodShare</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Dish2Donate</h1>
           </div>
           <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <Mail className="text-emerald-600" size={32} />
@@ -286,7 +286,7 @@ const VerifyEmail = () => {
         <div className="mt-4 text-center">
           <p className="text-xs text-gray-500">
             Having trouble? {' '}
-            <a href="mailto:support@foodshare. com" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+            <a href="mailto:support@Dish2Donate. com" className="text-emerald-600 hover:text-emerald-700 font-semibold">
               Contact Support
             </a>
           </p>

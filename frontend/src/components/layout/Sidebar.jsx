@@ -144,7 +144,7 @@ const restaurantMenuItems = [
               {role === 'admin' ? '🛡️' : '🍃'}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">FoodShare</h1>
+              <h1 className="text-xl font-bold text-gray-800">Dish2Donate</h1>
               <p className="text-xs text-gray-500">{getPortalName()}</p>
             </div>
           </div>

@@ -458,26 +458,39 @@ exports.getReports = async (req, res) => {
       .limit(10);
 
     // Get full details
-    const recentUsersWithDetails = await Promise.all(
-      recentUsers.map(async (user) => {
-        let fullUser;
-        if (user.role === 'restaurant') {
-          fullUser = await Restaurant.findById(user._id);
-        } else if (user. role === 'ngo') {
-          fullUser = await NGO.findById(user._id);
-        } else {
-          fullUser = await Admin.findById(user._id);
-        }
-        return {
-          id: fullUser._id,
-          name: fullUser.organizationName || fullUser.fullName || 'N/A',
-          email: fullUser.email,
-          role: fullUser.role,
-          isVerified: fullUser. isVerified,
-          createdAt: fullUser.createdAt
-        };
-      })
-    );
+const recentUsersWithDetails = await Promise.all(
+  recentUsers.map(async (user) => {
+    let fullUser;
+    if (user.role === 'restaurant') {
+      fullUser = await Restaurant.findById(user._id);
+    } else if (user.role === 'ngo') {
+      fullUser = await NGO.findById(user._id);
+    } else {
+      fullUser = await Admin.findById(user._id);
+    }
+
+    // ✅ Guard: skip if sub-document not found
+    if (!fullUser) {
+      return {
+        id: user._id,
+        name: 'N/A',
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt
+      };
+    }
+
+    return {
+      id: fullUser._id,
+      name: fullUser.organizationName || fullUser.fullName || 'N/A',
+      email: fullUser.email,
+      role: fullUser.role,
+      isVerified: fullUser.isVerified,
+      createdAt: fullUser.createdAt
+    };
+  })
+);
 
     // 6. MONTHLY REGISTRATION TRENDS (Last 6 months)
     const last6Months = new Date();

@@ -13,7 +13,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
         <div className="text-center">
           <div className="flex items-center justify-center gap-2 mb-6">
             <Leaf className="text-emerald-600 animate-pulse" size={40} />
-            <h1 className="text-3xl font-bold text-emerald-600">FoodShare</h1>
+            <h1 className="text-3xl font-bold text-emerald-600">Dish2Donate</h1>
           </div>
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-emerald-600 mx-auto mb-4"></div>
           <p className="text-gray-600 font-medium">Loading your dashboard...</p>

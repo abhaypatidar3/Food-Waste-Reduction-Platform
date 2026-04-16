@@ -30,7 +30,7 @@ const DashboardLayout = ({ children, role }) => {
               <div className={`w-8 h-8 ${getThemeColor()} rounded-lg flex items-center justify-center text-white font-bold`}>
                 {role === 'admin' ? '🛡️' : '🍃'}
               </div>
-              <h1 className="text-lg font-bold text-gray-800">FoodShare</h1>
+              <h1 className="text-lg font-bold text-gray-800">Dish2Donate</h1>
             </div>
             
             <div className="w-10"></div> {/* Spacer for centering */}

@@ -192,7 +192,7 @@ const ForgotPassword = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Leaf className="text-emerald-600" size={32} />
-            <h1 className="text-3xl font-bold text-gray-800">FoodShare</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Dish2Donate</h1>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
             {step === 1 ? 'Forgot Password?' : 'Reset Password'}
